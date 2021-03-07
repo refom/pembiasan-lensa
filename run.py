@@ -70,11 +70,15 @@ def DDA(x1, y1, x2, y2):
 	# Kembalikan xinc dan yinc
 	return xinc, yinc
 
+# Mencari Gradien/Slope
+def gradien(x1, y1, x2, y2):
+	m = (y2 - y1) / (x2 - x1)
+	return m
+
 # Mencari Persamaan garis
-def persamaan(x1, y1, x2, y2, m):
-	gradien = (y2 - y1) / (x2 - x1)
-	x = m
-	y = y2 + gradien * (x - x2)
+def persamaan(x1, y1, x2, y2, x):
+	m = gradien(x1, y1, x2, y2)
+	y = y2 + m * (x - x2)
 	return x, y
 
 # Convert Kordinat
@@ -104,17 +108,31 @@ class Kartesius(object):
 	x = 0
 	y = 0
 	def __init__(self):
-		x, y = cv_coor("xy", x=self.x, y=self.y)
+		x = Kartesius.get_x()
 		self.lensa = pygame.Rect(x, 0, 1, height) # Rectangle untuk lensa
-
 		self.fokus = 100
 	
-	def get_fokus2(self):
-		return self.fokus * 2
+	def get_fokus(self, inv:bool):
+		x = self.fokus
+		if inv:
+			x = cv_coor("x", x=x)
+			return x
+		x = invert_coor("x", x=x)
+		x = cv_coor("x", x=x)
+		return x
+
+	def get_fokus2(self, inv:bool):
+		x = self.fokus * 2
+		if inv:
+			x = cv_coor("x", x=x)
+			return x
+		x = invert_coor("x", x=x)
+		x = cv_coor("x", x=x)
+		return x
 
 	def draw(self):
 		# Convert coordinates
-		x, y = cv_coor("xy", x=self.x, y=self.y)
+		x, y = Kartesius.get_xy()
 
 		# Vertikal versi Rectangle
 		pygame.draw.rect(SCREEN, fg_color, self.lensa)
@@ -124,34 +142,32 @@ class Kartesius(object):
 		pygame.draw.line(SCREEN, fg_color, (0, y), (width, y)) # Horizontal
 
 	def draw_fokus(self):
-		# Konvert F
-		x, y = cv_coor("xy", x=self.fokus, y=self.y)
-
-		# F mirror
-		pygame.draw.line(SCREEN, fg_color, (x, y), (x, y - 10))
-		self.draw_text("F", x, y)
-
-		# Invers F
-		x = invert_coor("x", x=self.fokus)
-		x = cv_coor("x", x=x)
+		# Ambil titik Fokus
+		x, y = self.get_fokus(False), Kartesius.get_y()
 
 		# F
 		pygame.draw.line(SCREEN, fg_color, (x, y), (x, y - 10))
 		self.draw_text("F", x, y)
 
+		# Invers F
+		x = self.get_fokus(True)
 
-		# Konvert 2F
-		x = cv_coor("x", x=self.get_fokus2())
+		# F mirror
+		pygame.draw.line(SCREEN, fg_color, (x, y), (x, y - 10))
+		self.draw_text("F", x, y)
 
-		# 2F mirror
+
+		# Ambil titik Fokus 2
+		x = self.get_fokus2(False)
+
+		# 2F
 		pygame.draw.line(SCREEN, fg_color, (x, y), (x, y - 10))
 		self.draw_text("2F", x, y)
 
 		# Invers 2F
-		x = invert_coor("x", x=self.get_fokus2())
-		x = cv_coor("x", x=x)
+		x = self.get_fokus2(True)
 
-		# 2F
+		# 2F mirror
 		pygame.draw.line(SCREEN, fg_color, (x, y), (x, y - 10))
 		self.draw_text("2F", x, y)
 
@@ -169,130 +185,196 @@ class Kartesius(object):
 	def get_y(cls):
 		return cv_coor("y", y=cls.y)
 
+	@classmethod
+	def get_xy(cls):
+		return cv_coor("xy", x=cls.x, y=cls.y)
+
 
 # Benda
 class Benda(object):
 	def __init__(self):
+		# Benda
 		self.tinggi = 100
 		self.jarak = 150
-		self.c_sinar1 = GREEN
-		self.c_sinar2 = RED
-		self.c_sinar3 = BLUE
 
+		# Bayangan
+		self.x_shadow = 0
+		self.y_shadow = 0
+
+		# 2 titik garis Sinar
+		self.pos_sinarA = []
+		self.pos_sinarB = []
+		self.pos_sinarC = []
+
+		# Warna Sinar
+		self.c_sinarA = GREEN
+		self.c_sinarB = RED
+		self.c_sinarC = BLUE
+
+		# Panjang garis
+		self.min_value = 0
+		self.max_value = width
+
+	# Ambil kordinat yang sudah di convert
+	def get_x(self):
+		x = invert_coor("x", x=self.jarak)
+		x = cv_coor("x", x=x)
+		return x
+
+	def get_y(self):
+		y = invert_coor("y", y=self.tinggi)
+		y = cv_coor("y", y=y)
+		return y
+
+	def get_xy(self):
+		x, y = invert_coor("xy", x=self.jarak, y=self.tinggi)
+		x, y = cv_coor("xy", x=x, y=y)
+		return x, y
+
+	# Gambar gambar :")
 	def draw(self):
 		ky = Kartesius.get_y()
-		x, y = invert_coor("xy", x=self.jarak, y=self.tinggi)
-		x, y = cv_coor("xy", x=x, y=y)
+		x, y = self.get_xy()
 		pygame.draw.line(SCREEN, fg_color, (x, ky), (x, y), 3) # Benda
 
-	def draw_sinar(self, kart):
-		# Invers dan Konversi titik benda
-		x, y = invert_coor("xy", x=self.jarak, y=self.tinggi)
-		x, y = cv_coor("xy", x=x, y=y)
+	def draw_sinarA(self, kart):
+		# Ambil titik benda
+		x, y = self.get_xy()
 
-		# Ambil titik fokus asli dan mirror
-		fx1= cv_coor("x", x=kart.fokus) # Mirror
-		fx2 = invert_coor("x", x=kart.fokus)
-		fx2 = cv_coor("x", x=fx2) # Asli
+		# Ambil titik fokus mirror
+		fx= kart.get_fokus(True)
 
-		# Ambil titik tengah
-		x_middle, y_middle = cv_coor("xy", x=kart.x, y=kart.y)
+		# Ambil titik y kartesius
+		y_middle = Kartesius.get_y()
 
-		# minimum value
-		min_value = 0
-		max_value = width
-
-		######## --- SINAR A
 		# Pembuatan line && mengambil xinc dan yinc
 		# xinc dan yinc dari titik 0 ke width
 		line = (0, y, width, y)
 		xinc, yinc = DDA(line[0], line[1], line[2], line[3])
-		pygame.draw.line(SCREEN, self.c_sinar1, (x, y), (0, y))
+		pygame.draw.line(SCREEN, self.c_sinarA, (x, y), (0, y))
 
 		# Kalau collision dengan lensa
 		clipped_line = kart.lensa.clipline(line)
 		x_cross, y_cross = clipped_line[0]
 
 		# Penggambaran line
-		x_a, y_a = x, y
-		while x_a < width and y_a < height:
-			x_a += xinc
-			y_a += yinc
-			gfxdraw.pixel(SCREEN, rf_round(x_a), rf_round(y_a), self.c_sinar1)
+		while x < width and y < height:
+			x += xinc
+			y += yinc
+			gfxdraw.pixel(SCREEN, rf_round(x), rf_round(y), self.c_sinarA)
 
 			# Sinar ketemu lensa
-			if x_a == x_cross and y_a == y_cross:
-				xinc, yinc = DDA(x_a, y_a, fx1, y_middle)
+			if x == x_cross and y == y_cross:
+				xinc, yinc = DDA(x, y, fx, y_middle)
 
+		self.pos_sinarA = [(x_cross, y_cross), (x, y)]
 
-		######## --- SINAR B
+	def draw_sinarB(self, kart):
+		# Invers dan Konversi titik benda
+		x, y = self.get_xy()
+		
+		# Ambil titik fokus asli
+		fx = kart.get_fokus(False)
+
+		# Ambil titik y kartesius
+		y_middle = Kartesius.get_y()
+
 		# Persamaan garis ke belakang
-		x_b, y_b = persamaan(fx2, y_middle, x, y, min_value)
-		pygame.draw.line(SCREEN, self.c_sinar2, (x, y), (x_b, y_b), 1)
+		x_b, y_b = persamaan(fx, y_middle, x, y, self.min_value)
+		pygame.draw.line(SCREEN, self.c_sinarB, (x, y), (x_b, y_b), 1)
 
 		# Persamaan garis ke depan
-		x_b, y_b = persamaan(fx2, y_middle, x, y, max_value)
-		# pygame.draw.line(SCREEN, self.c_sinar2, (x, y), (x_b, y_b), 1)
+		x_b, y_b = persamaan(fx, y_middle, x, y, self.max_value)
+		# pygame.draw.line(SCREEN, self.c_sinarB, (x, y), (x_b, y_b), 1)
 
 		# Pembuatan line && mengambil xinc dan yinc
 		# xinc dan yinc dari titik benda ke persamaan garisnya
-		line2 = (x, y, x_b, y_b)
-		xinc, yinc = DDA(line2[0], line2[1], line2[2], line2[3])
+		line = (x, y, x_b, y_b)
+		xinc, yinc = DDA(line[0], line[1], line[2], line[3])
 
 		# Kalau collision dengan lensa
-		clipped_line = kart.lensa.clipline(line2)
+		clipped_line = kart.lensa.clipline(line)
 		x_cross, y_cross = clipped_line[0]
 
 		# Penggambaran line
-		x_b, y_b = x, y
-		while x_b < width and y_b < height:
-			x_b += xinc
-			y_b += yinc
-			gfxdraw.pixel(SCREEN, rf_round(x_b), rf_round(y_b), self.c_sinar2)
+		while x < width and y < height:
+			x += xinc
+			y += yinc
+			gfxdraw.pixel(SCREEN, rf_round(x), rf_round(y), self.c_sinarB)
 
 			# Sinar ketemu lensa
-			if x_b == x_cross and y_b == y_cross:
-				xinc, yinc = DDA(x_cross, y_cross, width, y_cross)
+			if x == x_cross and y == y_cross:
+				xinc, yinc = DDA(x, y, width, y_cross)
+		
+		self.pos_sinarB = [(x_cross, y_cross), (x, y)]
 
+	def draw_sinarC(self, kart):
+		# Invers dan Konversi titik benda
+		x, y = self.get_xy()
 
-		######## --- SINAR C
+		# Ambil titik y kartesius
+		x_middle, y_middle = Kartesius.get_xy()
+		
 		# Persamaan garis ke belakang
-		x_c, y_c = persamaan(x_middle, y_middle, x, y, min_value)
-		pygame.draw.line(SCREEN, self.c_sinar3, (x, y), (x_c, y_c), 1)
+		x_c, y_c = persamaan(x_middle, y_middle, x, y, self.min_value)
+		pygame.draw.line(SCREEN, self.c_sinarC, (x, y), (x_c, y_c), 1)
 
 		# Persamaan garis ke depan
-		x_c, y_c = persamaan(x_middle, y_middle, x, y, max_value)
-		# pygame.draw.line(SCREEN, self.c_sinar3, (x, y), (x_c, y_c), 1)
+		x_c, y_c = persamaan(x_middle, y_middle, x, y, self.max_value)
+		pygame.draw.line(SCREEN, self.c_sinarC, (x, y), (x_c, y_c), 1)
 
 		# Pembuatan line && mengambil xinc dan yinc
 		# xinc dan yinc dari titik benda ke persamaan garisnya
-		line3 = (x, y, x_c, y_c)
-		xinc, yinc = DDA(line3[0], line3[1], line3[2], line3[3])
-
-		# Kalau collision dengan lensa
-		clipped_line = kart.lensa.clipline(line3)
-		x_cross, y_cross = clipped_line[0]
+		# line = (x, y, x_c, y_c)
+		# xinc, yinc = DDA(line[0], line[1], line[2], line[3])
 
 		# Penggambaran line
-		x_c, y_c = x, y
-		while x_c < width and y_c < height:
-			x_c += xinc
-			y_c += yinc
-			gfxdraw.pixel(SCREEN, rf_round(x_c), rf_round(y_c), self.c_sinar3)
+		# while x < width and y < height:
+		# 	x += xinc
+		# 	y += yinc
+		# 	gfxdraw.pixel(SCREEN, rf_round(x), rf_round(y), self.c_sinarC)
 
-		pygame.display.flip()
+	# Handle Bayangan // Intersection of Two Lines
+	def handle_bayangan(self):
+		sinarA = self.pos_sinarA
+		sinarB = self.pos_sinarB
 
+		# Cari gradien dari 2 garis
+		m = gradien(sinarA[0][0], sinarA[0][1], sinarA[1][0], sinarA[1][1])
+		m1 = gradien(sinarB[0][0], sinarB[0][1], sinarB[1][0], sinarB[1][1])
+
+		# Cari titik potongnya
+		x = (sinarB[0][1] - sinarA[0][1]) / (m - m1)
+		y = sinarA[0][1] + m * x
+
+		self.x_shadow = x
+		self.y_shadow = y
+
+	def draw_bayangan(self):
+		ky = Kartesius.get_y()
+		x = cv_coor("x", x=self.x_shadow)
+		y = self.y_shadow
+		pygame.draw.line(SCREEN, WHITE, (x, y), (x, ky), 3)
 
 # Bagian penggambaran screen
 def draw_screen(kart, benda):
 	# Background
 	SCREEN.fill(bg_color)
 
-	# Anything
+	# Penggambaran
 	kart.draw()
 	kart.draw_fokus()
 	benda.draw()
-	benda.draw_sinar(kart)
+	benda.draw_sinarA(kart)
+	benda.draw_sinarB(kart)
+	benda.draw_sinarC(kart)
+
+	# Gambar bayangan
+	benda.handle_bayangan()
+	benda.draw_bayangan()
+
+	# Tampilkan apa yg sudah digambar
+	pygame.display.flip()
 
 	# Update
 	pygame.display.update()

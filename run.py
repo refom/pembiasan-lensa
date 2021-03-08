@@ -14,6 +14,7 @@ BLACK = (0,0,0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+ORANGE = (255, 165, 0)
 
 FONT = pygame.font.Font(None, 24)
 
@@ -204,7 +205,6 @@ class Benda(object):
 		# 2 titik garis Sinar
 		self.pos_sinarA = []
 		self.pos_sinarB = []
-		self.pos_sinarC = []
 
 		# Warna Sinar
 		self.c_sinarA = GREEN
@@ -277,14 +277,14 @@ class Benda(object):
 		fx = kart.get_fokus(False)
 
 		# Ambil titik y kartesius
-		y_middle = Kartesius.get_y()
+		x_middle, y_middle = Kartesius.get_xy()
 
 		# Persamaan garis ke belakang
 		x_b, y_b = persamaan(fx, y_middle, x, y, self.min_value)
 		pygame.draw.line(SCREEN, self.c_sinarB, (x, y), (x_b, y_b), 1)
 
 		# Persamaan garis ke depan
-		x_b, y_b = persamaan(fx, y_middle, x, y, self.max_value)
+		x_b, y_b = persamaan(x, y, fx, y_middle, self.max_value)
 		# pygame.draw.line(SCREEN, self.c_sinarB, (x, y), (x_b, y_b), 1)
 
 		# Pembuatan line && mengambil xinc dan yinc
@@ -294,17 +294,21 @@ class Benda(object):
 
 		# Kalau collision dengan lensa
 		clipped_line = kart.lensa.clipline(line)
-		x_cross, y_cross = clipped_line[0]
+		x_cross, y_cross = clipped_line[1]
 
 		# Penggambaran line
-		while x < width and y < height:
+		while x <= x_middle and y < height:
 			x += xinc
 			y += yinc
 			gfxdraw.pixel(SCREEN, rf_round(x), rf_round(y), self.c_sinarB)
 
-			# Sinar ketemu lensa
-			if x == x_cross and y == y_cross:
-				xinc, yinc = DDA(x, y, width, y_cross)
+		xinc, yinc = DDA(x, y, width, y)
+
+		# Sinar ketemu lensa
+		while x < width and y < height:
+			x += xinc
+			y += yinc
+			gfxdraw.pixel(SCREEN, rf_round(x), rf_round(y), self.c_sinarB)
 		
 		self.pos_sinarB = [(x_cross, y_cross), (x, y)]
 
@@ -356,8 +360,76 @@ class Benda(object):
 		y = self.y_shadow
 		pygame.draw.line(SCREEN, WHITE, (x, y), (x, ky), 3)
 
+	def handle_movement(self, key_pressed):
+		if key_pressed[pygame.K_LEFT]:
+			self.jarak += 1
+		if key_pressed[pygame.K_RIGHT]:
+			self.jarak -= 1
+		if key_pressed[pygame.K_UP]:
+			self.tinggi += 1
+		if key_pressed[pygame.K_DOWN]:
+			self.tinggi -= 1
+
+def tulis(teks, x, y, color):
+	text = FONT.render(teks, 1, color)
+	SCREEN.blit(text, [x, y])
+
+# User Interface
+class Gui(object):
+	def __init__(self):
+		self.bg_color = ORANGE
+		self.fg_color = BLACK
+
+		self.background = pygame.Rect(0, 0, width, 150)
+		h = self.background.height
+		self.b_show = pygame.Rect(50, h, 50, 50)
+
+		self.show = True
+	
+	def draw(self, clock, benda):
+		# Draw background
+		pygame.draw.rect(SCREEN, self.bg_color, self.background)
+		pygame.draw.rect(SCREEN, self.bg_color, self.b_show, border_bottom_left_radius=5, border_bottom_right_radius=5)
+
+		# Draw button show/hide
+		x = self.b_show.x
+		y = self.b_show.y
+		w = self.b_show.width
+		h = self.b_show.height
+		if self.show:
+			w = x + w - 15
+			h = y + h - 15
+			x += 15
+			y += 15
+			pygame.draw.line(SCREEN, self.fg_color, (x, y), (w, h), 3)
+			pygame.draw.line(SCREEN, self.fg_color, (w, y), (x, h), 3)
+		else:
+			x1 = x + w // 2
+			y1 = y + 10
+			h1 = y + h - 10
+			x2 = x + 10
+			y2 = y + h // 2
+			x3 = x + w - 10
+			pygame.draw.line(SCREEN, self.fg_color, (x1, y1), (x1, h1), 3) # I
+			pygame.draw.line(SCREEN, self.fg_color, (x2, y2), (x1, h1), 3) # \
+			pygame.draw.line(SCREEN, self.fg_color, (x3, y2), (x1, h1), 3) # /
+
+		# Draw tulisan
+		x1 = self.background.x + 20
+		y1 = self.background.y + 10
+		teks = [
+			f"FPS : {clock.tick(FPS)}",
+			f"Jarak Benda : {benda.jarak}",
+			f"Tinggi Benda : {benda.tinggi}"
+			]
+		for txt in teks:
+			tulis(txt, x1, y1, self.fg_color)
+			y1 += 24
+		
+
+
 # Bagian penggambaran screen
-def draw_screen(kart, benda):
+def draw_screen(kart, benda, gui, clock):
 	# Background
 	SCREEN.fill(bg_color)
 
@@ -372,6 +444,9 @@ def draw_screen(kart, benda):
 	# Gambar bayangan
 	benda.handle_bayangan()
 	benda.draw_bayangan()
+
+	# Gambar UI
+	# gui.draw(clock, benda)
 
 	# Tampilkan apa yg sudah digambar
 	pygame.display.flip()
@@ -388,6 +463,7 @@ def main():
 	
 	kart = Kartesius()
 	benda = Benda()
+	gui = Gui()
 
 	# Event Handler
 	while run:
@@ -396,7 +472,9 @@ def main():
 			if event.type == pygame.QUIT:
 				run = False
 			
-		draw_screen(kart, benda)
+		key_pressed = pygame.key.get_pressed()
+		benda.handle_movement(key_pressed)
+		draw_screen(kart, benda, gui, clock)
 	
 	pygame.quit()
 

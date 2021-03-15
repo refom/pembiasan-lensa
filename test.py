@@ -12,7 +12,6 @@ FPS = 60
 
 # Color
 WHITE = (255,255,255)
-LIGHT_GRAY = (200,200,200)
 DARK_GRAY = (50,50,50,128)
 DARK_GRAY2 = (50,50,50,90)
 BLACK = (0,0,0)
@@ -29,20 +28,6 @@ Jarak Bayangan = (Fokus * Jarak Benda) / (Jarak Benda - Fokus)
 Tinggi Bayangan = (Jarak Bayangan / Jarak Benda) * Tinggi Benda
 """
 
-# Convert Kordinat
-class CvCoor:
-	@staticmethod
-	def x(x):
-		return (SCREEN.get_width()//2) + x
-
-	@staticmethod
-	def y(y):
-		return (SCREEN.get_height()//2) + y
-
-	@staticmethod
-	def xy(x, y):
-		return CvCoor.x(x), CvCoor.y(y)
-
 # Mencari Gradien/Slope
 def gradien(xy1, xy2):
 	try:
@@ -57,11 +42,7 @@ def persamaan(xy1, xy2, panjang):
 	y = xy2[1] + m * (panjang - xy2[0])
 	return panjang, y
 
-# Buat teks
-def draw_text(teks, x, y):
-	text = FONT.render(str(teks), True, fg_color)
-	SCREEN.blit(text, (x, y))
-
+# DDA
 def DDA(xy1, xy2):
 	# Variabel lokal
 	x = xy1[0]
@@ -95,17 +76,36 @@ def DDA(xy1, xy2):
 			x = int(x)
 			y = int(y)
 
+# Convert Kordinat
+class CvCoor:
+	@staticmethod
+	def x(x):
+		return (SCREEN.get_width()//2) + x
+
+	@staticmethod
+	def y(y):
+		return (SCREEN.get_height()//2) + y
+
+	@staticmethod
+	def xy(x, y):
+		return CvCoor.x(x), CvCoor.y(y)
+
+
 class Kartesius:
 	x = 0
 	y = 0
 	fokus = 100
 
 	@classmethod
-	def handle_movement(cls, key_pressed):
+	def handle_movement(cls, key_pressed, mouse_pressed):
 		if key_pressed[pygame.K_q]:
 			cls.fokus += 1
 		if key_pressed[pygame.K_e]:
 			cls.fokus -= 1
+		
+		if mouse_pressed[2]:
+			mouse_pos = pygame.mouse.get_pos()
+			cls.fokus = (mouse_pos[0] - width//2) * -1
 
 	@classmethod
 	def draw(cls):
@@ -174,7 +174,7 @@ class Benda:
 		pygame.draw.line(SCREEN, BLUE, (kt_x, kt_y), (x_new, y_new))
 
 	@classmethod
-	def handle_movement(cls, key_pressed):
+	def handle_movement(cls, key_pressed, mouse_pressed):
 		if key_pressed[pygame.K_a]:
 			cls.jarak += 1
 		if key_pressed[pygame.K_d]:
@@ -183,6 +183,11 @@ class Benda:
 			cls.tinggi += 1
 		if key_pressed[pygame.K_s]:
 			cls.tinggi -= 1
+		
+		if mouse_pressed[0]:
+			mouse_pos = pygame.mouse.get_pos()
+			cls.jarak = (mouse_pos[0] - width//2) * -1
+			cls.tinggi = (mouse_pos[1] - height//2) * -1
 
 
 class Bayangan:
@@ -239,31 +244,22 @@ class UI:
 		SCREEN.blit(text_obj, (xy[0], xy[1]))
 
 	@classmethod
-	def draw(cls):
-
-		# Buat kotak info
-		# x, y = width - 20, 20
-		# w, h = width//4, height//4
-		# base = pygame.Rect(0, 0, w, h)
-		# base.topright = (x, y)
-		# pygame.draw.rect(SCREEN, LIGHT_GRAY, base, 0, 15)
-
-		# base = pygame.Rect(-10, -10, 270, 70)
-		# pygame.draw.rect(SCREEN, DARK_GRAY, base, 0, 15)
-		
+	def draw(cls, clock):
 		# Gambar info
-		base = pygame.Surface((270, 70), pygame.SRCALPHA)
+		w, h = 370, 70
+		base = pygame.Surface((w, h), pygame.SRCALPHA)
 		pygame.draw.rect(base, DARK_GRAY, base.get_rect(), 0, 15)
 		SCREEN.blit(base, (-10, -10))
 
-		text_obj = cls.render_text("W A S D : Menggerakkan Benda", fg_color)
+		text_obj = cls.render_text("W A S D / Left Click : Menggerakkan Benda", fg_color)
 		cls.display_text(text_obj, (10, 10))
-		text_obj = cls.render_text("Q E : Menggerakkan Titik Fokus", fg_color)
+		text_obj = cls.render_text("Q E / Right Click : Menggerakkan Titik Fokus", fg_color)
 		cls.display_text(text_obj, (10, 30))
 
 
 		# Gambar teks
-		base = pygame.Surface((220, 150), pygame.SRCALPHA)
+		w, h = 220, 170
+		base = pygame.Surface((w, h), pygame.SRCALPHA)
 		pygame.draw.rect(base, DARK_GRAY2, base.get_rect(), 0, 15)
 		SCREEN.blit(base, (-20, height - base.get_height() + 20))
 		
@@ -282,11 +278,19 @@ class UI:
 		for t in teks:
 			text_obj = cls.render_text(t, fg_color)
 			cls.display_text(text_obj, (x_text, y_text))
-			y_text -= 20
+			y_text -= 25
+
+		# Ping
+		ping = clock.tick(FPS)
+		color = GREEN
+		if ping > 100:
+			color = RED
+		text_obj = cls.render_text(f"PING = {ping}", color)
+		cls.display_text(text_obj, (width - 100, 20))
 
 
 # Bagian penggambaran screen
-def draw_screen():
+def draw_screen(clock):
 	# Background
 	SCREEN.fill(bg_color)
 
@@ -301,7 +305,7 @@ def draw_screen():
 	Bayangan.draw()
 
 	# User Interface
-	UI.draw()
+	UI.draw(clock)
 
 
 # Bagian utama
@@ -320,14 +324,16 @@ def main():
 
 		# Handle Movement
 		key_pressed = pygame.key.get_pressed()
-		Benda.handle_movement(key_pressed)
-		Kartesius.handle_movement(key_pressed)
+		mouse_pressed = pygame.mouse.get_pressed()
+
+		Benda.handle_movement(key_pressed, mouse_pressed)
+		Kartesius.handle_movement(key_pressed, mouse_pressed)
 
 		# Handle Bayangan
 		Bayangan.update()
 
 		# Draw screen
-		draw_screen()
+		draw_screen(clock)
 
 		# Tampilkan apa yg sudah digambar
 		pygame.display.flip()

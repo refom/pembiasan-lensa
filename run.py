@@ -6,7 +6,7 @@ if not pygame.font:
 
 pygame.init()
 size = width, height = 1000, 640
-SCREEN = pygame.display.set_mode(size)
+SCREEN = pygame.display.set_mode(size, pygame.SCALED | pygame.RESIZABLE)
 pygame.display.set_caption("Pembiasan Cahaya - Lensa Positif")
 
 WHITE = (255,255,255)
@@ -294,7 +294,7 @@ class Benda(object):
 
 		# Kalau collision dengan lensa
 		clipped_line = kart.lensa.clipline(line)
-		x_cross, y_cross = clipped_line[1]
+		x_cross, y_cross = clipped_line[0]
 
 		# Penggambaran line
 		while x <= x_middle and y < height:

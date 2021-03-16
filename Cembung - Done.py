@@ -8,8 +8,6 @@ pygame.init()
 SCREEN = pygame.display.set_mode((1000, 640), pygame.RESIZABLE)
 pygame.display.set_caption("Pembiasan Cahaya - Lensa Positif/Cembung")
 
-FPS = 60
-
 # Color
 WHITE = (255,255,255)
 WHITESMOKE = (245,245,245)
@@ -86,13 +84,14 @@ def DDA(xy1, xy2):
 
 # Convert Kordinat
 class CvCoor:
+	# Kuadran II
 	@staticmethod
 	def x(x):
-		return (SCREEN.get_width()//2) + x
+		return (SCREEN.get_width()//2) + x * -1
 
 	@staticmethod
 	def y(y):
-		return (SCREEN.get_height()//2) + y
+		return (SCREEN.get_height()//2) + y * -1
 
 	@staticmethod
 	def xy(x, y):
@@ -106,9 +105,9 @@ class Kartesius:
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed):
 		if key_pressed[pygame.K_q]:
-			cls.fokus += 1
-		if key_pressed[pygame.K_e]:
 			cls.fokus -= 1
+		if key_pressed[pygame.K_e]:
+			cls.fokus += 1
 		
 		if mouse_pressed[2]:
 			mouse_pos = pygame.mouse.get_pos()
@@ -122,19 +121,19 @@ class Kartesius:
 
 	@classmethod
 	def draw_fokus(cls):
-		x, y = CvCoor.x(cls.fokus * -1), CvCoor.y(cls.y)
+		x, y = CvCoor.x(cls.fokus), CvCoor.y(cls.y)
 		DDA((x, y), (x, y - 10)) # F
 		Kartesius.draw_text("F", x, y)
 		
-		x = CvCoor.x(cls.fokus)
+		x = CvCoor.x(cls.fokus * -1)
 		DDA((x, y), (x, y - 10)) # F Mirror
 		Kartesius.draw_text("F", x, y)
 
-		x = CvCoor.x(cls.fokus * 2 * -1)
+		x = CvCoor.x(cls.fokus * 2)
 		DDA((x, y), (x, y - 10)) # 2F
 		Kartesius.draw_text("2F", x, y)
 
-		x = CvCoor.x(cls.fokus * 2)
+		x = CvCoor.x(cls.fokus * 2 * -1)
 		DDA((x, y), (x, y - 10)) # 2F Mirror
 		Kartesius.draw_text("2F", x, y)
 
@@ -148,42 +147,69 @@ class Kartesius:
 class Benda:
 	jarak = 200
 	tinggi = 100
+	mirror = False
 
 	@classmethod
 	def draw(cls):
 		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
-		# Kordinat Fokus
-		fokus = CvCoor.x(Kartesius.fokus)
+		# Kordinat Fokus sebelah
+		fokus_kanan = CvCoor.x(Kartesius.fokus * -1)
+		fokus_kiri = CvCoor.x(Kartesius.fokus)
 		# Kordinat Benda
-		x, y = CvCoor.xy(cls.jarak * -1, cls.tinggi * -1)
+		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
 		# Gambar Benda
 		DDA((x, kt_y), (x, y))
+		# kalau ada night mode, set warna
+		if Button.night_mode:
+			color_awal = GREEN
+			color_pantul = GREENYELLOW
+		else:
+			color_awal = DARK_GREEN
+			color_pantul = GREEN2
 
 		"""
 			Algoritma Sinar A
 		1. gambar garis dari titik x kartesius ke 0 (garis kebelakang)
 		2. gambar garis dari titik x kartesius ke titik fokus seberang
-		3. jika garis lebih dari titik x kartesius, balik gambarnya
+		Panjang sinar 1 = sinar lurus
+		Panjang sinar 2 = sinar ke fokus
 		"""
-		if x >= kt_x:
-			x_new, y_new = persamaan((kt_x, y), (0, y), width)
-		else:
-			x_new, y_new = persamaan((kt_x, y), (0, y), 0)
-		
-		if Button.night_mode:
-			pygame.draw.line(SCREEN, GREEN, (kt_x, y), (x_new, y_new)) # 1
-		else:
-			pygame.draw.line(SCREEN, DARK_GREEN, (kt_x, y), (x_new, y_new)) # 1
 
-		x_new, y_new = persamaan((kt_x, y), (fokus, kt_y), width) # 2
-		if Button.night_mode:
-			pygame.draw.line(SCREEN, GREENYELLOW, (kt_x, y), (x_new, y_new))
+		if cls.mirror:
+			panjang_sinar1 = 0
+			if cls.jarak <= Kartesius.fokus:
+				panjang_sinar2 = 0
+			else:
+				panjang_sinar2 = width
 		else:
-			pygame.draw.line(SCREEN, GREEN2, (kt_x, y), (x_new, y_new))
+			panjang_sinar1 = width
+			if cls.jarak >= Kartesius.fokus:
+				panjang_sinar2 = 0
+			else:
+				panjang_sinar2 = width
+
+		# Sinar A ke garis kartesius
+		x_a1, y_a1 = persamaan((kt_x, y), (0, y), panjang_sinar1)
+		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_a1, y_a1))
+
+		# Sinar A ke fokus
+		x_a2, y_a2 = persamaan((kt_x, y), (fokus_kanan, kt_y), panjang_sinar2)
+		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x_a2, y_a2))
+		
 		# Sinar C
 		x_new, y_new = persamaan((kt_x, kt_y), (x, y), 0)
 		pygame.draw.line(SCREEN, BLUE, (kt_x, kt_y), (x_new, y_new))
+
+	@classmethod
+	def handle_mirror(cls):
+		kt_x = CvCoor.x(Kartesius.x)
+		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
+
+		if x <= kt_x:
+			cls.mirror = True
+		else:
+			cls.mirror = False
 
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed):
@@ -219,20 +245,41 @@ class Bayangan:
 
 	@classmethod
 	def draw(cls):
+		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
-		fokus = CvCoor.x(Kartesius.fokus * -1)
-		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
-		DDA((x, kt_y), (x, y)) # Bayangan
+		# Kordinat Fokus
+		fokus = CvCoor.x(Kartesius.fokus)
+		# Kordinat Bayangan
+		x, y = CvCoor.xy(cls.jarak * -1, cls.tinggi * -1)
+		# Gambar Bayangan
+		DDA((x, kt_y), (x, y))
+		# warna
+		color_awal = RED
+		color_pantul = DEEPPINK
 
-		# Sinar B
-		if x <= kt_x:
-			x_new, y_new = persamaan((kt_x, y), (0, y), 0)
+		# Panjang sinar 1 = sinar ke fokus
+		# Panjang sinar 2 = sinar lurus
+
+		if Benda.mirror:
+			panjang_sinar2 = 0
+			if Benda.jarak >= Kartesius.fokus:
+				panjang_sinar1 = width
+			else:
+				panjang_sinar1 = 0
 		else:
-			x_new, y_new = persamaan((kt_x, y), (0, y), width)
-		pygame.draw.line(SCREEN, DEEPPINK, (kt_x, y), (x_new, y_new)) # 1
+			panjang_sinar2 = width
+			if Benda.jarak <= Kartesius.fokus:
+				panjang_sinar1 = width
+			else:
+				panjang_sinar1 = 0
 
-		x_new, y_new = persamaan((kt_x, y), (fokus, kt_y), 0) # 2
-		pygame.draw.line(SCREEN, RED, (kt_x, y), (x_new, y_new))
+		# Sinar B ke garis kartesius
+		x_b1, y_b1 = persamaan((kt_x, y), (0, y), panjang_sinar1)
+		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x_b1, y_b1))
+
+		# Sinar B ke fokus
+		x_b2, y_b2 = persamaan((kt_x, y), (fokus, kt_y), panjang_sinar2)
+		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))
 
 		# Sinar C
 		x_new, y_new = persamaan((kt_x, kt_y), (x, y), width)
@@ -253,7 +300,7 @@ class UI:
 		SCREEN.blit(text_obj, (xy[0], xy[1]))
 
 	@classmethod
-	def draw(cls, clock):
+	def draw(cls):
 		# Gambar info
 		w, h = 370, 70
 		base = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -288,63 +335,56 @@ class UI:
 			cls.display_text(text_obj, (x_text, y_text))
 			y_text -= 25
 
-		# Ping
-		ping = clock.tick(FPS)
-		color = GREEN
-		if ping > 100:
-			color = RED
-		text_obj = cls.render_text(f"PING = {ping}", color)
-		cls.display_text(text_obj, (width - 100, 20))
-
 		# Night mode
 		font = pygame.font.Font(None, 48)
 		text_obj = cls.render_text("N", bg_color, font)
-		cls.display_text(text_obj, (width - 75, 60))
+		cls.display_text(text_obj, (width - 60, 30))
 
 class Button:
 	night_mode = True
-	nm_color = WHITE
 
-	@classmethod
-	def draw(cls):
-		# Night mode
-		x, y = width - 90, 50
-		w, h = 50, 50
-		rect = pygame.Rect((x, y), (w, h))
-		pygame.draw.rect(SCREEN, cls.nm_color, rect, 0, 15)
+	def __init__(self, x, y, w, h, color):
+		self.x = x
+		self.y = y
+		self.w = w
+		self.h = h
+		self.rect = pygame.Rect((x, y), (w, h))
+		self.color = color
+
+	def draw(self):
+		pygame.draw.rect(SCREEN, self.color, self.rect, 0, 15)
 
 	@staticmethod
 	def check_collisions(a_x, a_y, a_width, a_height, b_x, b_y, b_width, b_height):
 		return (a_x + a_width > b_x) and (a_x < b_x + b_width) and (a_y + a_height > b_y) and (a_y < b_y + b_height)
 
-	@classmethod
-	def handle(cls, mouse_pressed):
+	def handle(self, mouse_pressed):
 		global bg_color, fg_color
 		mouse_pos = pygame.mouse.get_pos()
 		# Night mode click
-		if cls.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, width - 90, 50, 50, 50):
-			cls.nm_color = GRAY
+		if Button.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, self.x, self.y, self.w, self.h):
+			self.color = GRAY
 			if mouse_pressed[0]:
-				if cls.night_mode:
-					cls.nm_color = WHITESMOKE
+				if Button.night_mode:
+					self.color = WHITESMOKE
 					bg_color = WHITESMOKE
 					fg_color = BLACK
-					cls.night_mode = False
+					Button.night_mode = False
 					pygame.time.wait(250)
 				else:
-					cls.nm_color = BLACK
+					self.color = BLACK
 					bg_color = BLACK
 					fg_color = WHITE
-					cls.night_mode = True
+					Button.night_mode = True
 					pygame.time.wait(250)
 		else:
-			if cls.night_mode:
-				cls.nm_color = WHITESMOKE
+			if Button.night_mode:
+				self.color = WHITESMOKE
 			else:
-				cls.nm_color = BLACK
+				self.color = BLACK
 
 # Bagian penggambaran screen
-def draw_screen(clock):
+def draw_screen(night_mode):
 	# Background
 	SCREEN.fill(bg_color)
 
@@ -359,19 +399,23 @@ def draw_screen(clock):
 	Bayangan.draw()
 
 	# Button
-	Button.draw()
+	night_mode.draw()
 
 	# User Interface
-	UI.draw(clock)
+	UI.draw()
 
 # Bagian utama
 def main():
 	global fg_color, bg_color, width, height
-	clock = pygame.time.Clock()
 	run = True
 
 	fg_color = WHITE
 	bg_color = BLACK
+
+	# Night mode
+	x, y = SCREEN.get_width() - 75, 20
+	w, h = 50, 50
+	night_mode = Button(x, y, w, h, WHITE)
 
 	# Event Handler
 	while run:
@@ -387,13 +431,16 @@ def main():
 		Kartesius.handle_movement(key_pressed, mouse_pressed)
 
 		# Handle click
-		Button.handle(mouse_pressed)
+		night_mode.handle(mouse_pressed)
 
 		# Handle Bayangan
 		Bayangan.update()
 
+		# Handle Mirror
+		Benda.handle_mirror()
+
 		# Draw screen
-		draw_screen(clock)
+		draw_screen(night_mode)
 
 		# Tampilkan apa yg sudah digambar
 		pygame.display.flip()
@@ -401,7 +448,8 @@ def main():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				run = False
+	
+	pygame.quit()
 
 if __name__ == "__main__":
 	main()
-	pygame.quit()

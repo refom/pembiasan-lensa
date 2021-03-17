@@ -101,6 +101,7 @@ class Kartesius:
 	x = 0
 	y = 0
 	fokus = 100
+	fokus_mirror = False
 
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed):
@@ -112,6 +113,14 @@ class Kartesius:
 		if mouse_pressed[2]:
 			mouse_pos = pygame.mouse.get_pos()
 			cls.fokus = (mouse_pos[0] - width//2) * -1
+
+	@classmethod
+	def handle_mirror(cls):
+		if cls.fokus < 0:
+			cls.fokus_mirror = True
+			cls.fokus *= -1
+		else:
+			cls.fokus_mirror = False
 
 	@classmethod
 	def draw(cls):
@@ -153,9 +162,13 @@ class Benda:
 	def draw(cls):
 		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
-		# Kordinat Fokus sebelah
-		fokus_kanan = CvCoor.x(Kartesius.fokus * -1)
-		fokus_kiri = CvCoor.x(Kartesius.fokus)
+
+		# Kordinat Fokus
+		if Kartesius.fokus_mirror:
+			fokus = CvCoor.x(Kartesius.fokus)
+		else:
+			fokus = CvCoor.x(Kartesius.fokus * -1)
+
 		# Kordinat Benda
 		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
 		# Gambar Benda
@@ -194,22 +207,19 @@ class Benda:
 		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_a1, y_a1))
 
 		# Sinar A ke fokus
-		x_a2, y_a2 = persamaan((kt_x, y), (fokus_kanan, kt_y), panjang_sinar2)
+		x_a2, y_a2 = persamaan((kt_x, y), (fokus, kt_y), panjang_sinar2)
 		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x_a2, y_a2))
-		
+
 		# Sinar C
 		x_new, y_new = persamaan((kt_x, kt_y), (x, y), 0)
 		pygame.draw.line(SCREEN, BLUE, (kt_x, kt_y), (x_new, y_new))
 
 	@classmethod
 	def handle_mirror(cls):
-		kt_x = CvCoor.x(Kartesius.x)
-		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
-
-		if x <= kt_x:
-			cls.mirror = True
-		else:
+		if cls.jarak < Kartesius.x:
 			cls.mirror = False
+		else:
+			cls.mirror = True
 
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed):
@@ -247,8 +257,13 @@ class Bayangan:
 	def draw(cls):
 		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
+
 		# Kordinat Fokus
-		fokus = CvCoor.x(Kartesius.fokus)
+		if Kartesius.fokus_mirror:
+			fokus = CvCoor.x(Kartesius.fokus * -1)
+		else:
+			fokus = CvCoor.x(Kartesius.fokus)
+
 		# Kordinat Bayangan
 		x, y = CvCoor.xy(cls.jarak * -1, cls.tinggi * -1)
 		# Gambar Bayangan
@@ -437,6 +452,7 @@ def main():
 		Bayangan.update()
 
 		# Handle Mirror
+		Kartesius.handle_mirror()
 		Benda.handle_mirror()
 
 		# Draw screen

@@ -51,6 +51,8 @@ def cv_coor(x, y):
 	35  42
 """
 
+
+
 def DDA(xy1, xy2, color):
 	# Variabel lokal [0, 1] (x, y)
 	x = xy1[0]
@@ -73,9 +75,24 @@ def DDA(xy1, xy2, color):
 		y += yinc
 		gfxdraw.pixel(SCREEN, round(x), round(y), color)
 
+FONT = pygame.font.Font(None, 24)
+
+def draw_text(teks, x, y):
+	text = FONT.render(teks, False, WHITE)
+	text_pos = text.get_rect(centerx=x, centery=y - 15)
+	SCREEN.blit(text, text_pos)
+
 # atur gerakan
-def atur_gerakan(keys):
-	global jarak_benda, tinggi_benda, fokus
+def atur_gerakan():
+	global jarak_benda, tinggi_benda, fokus, last_pos_mouse, mouse_gerak, benda1
+
+	# Buat ngambil key yang ditekan
+	keys = pygame.key.get_pressed()
+
+	# Buat ngambil mouse yang ditekan
+	mouse = pygame.mouse.get_pressed()
+	mouse_pos = pygame.mouse.get_pos()
+
 	if keys[pygame.K_RIGHT]:
 		jarak_benda -= 1
 	if keys[pygame.K_LEFT]:
@@ -91,19 +108,44 @@ def atur_gerakan(keys):
 		fokus += 1
 
 
+	if mouse[0] and collision(mouse_pos[0], mouse_pos[1], 3, 3, benda1.x, benda1.y, benda1.w, benda1.h):
+		# print("masuk")
+		jarak_benda = (mouse_pos[0] - SCREEN.get_width()//2) * -1
+		tinggi_benda = (mouse_pos[1] - SCREEN.get_height()//2) * -1
+		benda1.x, benda1.y = cv_coor(jarak_benda, tinggi_benda)
+		benda1.x -= 10
+		benda1.y -= 5
+		benda1.h = tinggi_benda
+
+	# if mouse[0]:
+	# 	jarak_benda = (mouse_pos[0] - SCREEN.get_width()//2) * -1
+	# 	tinggi_benda = (mouse_pos[1] - SCREEN.get_height()//2) * -1
+
+def collision(x1, y1, width1, height1, x2, y2, width2, height2): # mouse, line
+	if (x1 + width1) > x2 and (y1 + height1) > y2 and (x1 + width1) < (x2 + width2) and (y1 + height1) < (y2 + height2):
+		return True
+
+x_11, y_11 = cv_coor(jarak_benda, tinggi_benda)
+benda1 = pygame.Rect(x_11 - 10, y_11 - 20, 20, tinggi_benda)
+
 # Awal
 def main():
-
 	run = True
-
 
 	while run:
 		# Gambar Background
 		SCREEN.fill(BLACK)
 
 		# Buat bayangan
-		jarak_bayangan = ((fokus * jarak_benda) / (jarak_benda - fokus)) * -1
-		tinggi_bayangan = (jarak_bayangan / jarak_benda) * tinggi_benda
+		try:
+			jarak_bayangan = ((fokus * jarak_benda) / (jarak_benda - fokus)) * -1
+		except:
+			jarak_bayangan = 0
+		else:
+			try:
+				tinggi_bayangan = (jarak_bayangan / jarak_benda) * tinggi_benda
+			except:
+				tinggi_bayangan = 0
 
 		# Garis x
 		x1, y1 = 0, SCREEN.get_height()//2
@@ -118,34 +160,65 @@ def main():
 		# Buat benda
 		x1, y1 = cv_coor(jarak_benda, 0)
 		x2, y2 = cv_coor(jarak_benda, tinggi_benda)
-		DDA((x1, y1), (x2,y2), WHITE)
+		pygame.draw.line(SCREEN, WHITE, (x1, y1), (x2, y2))
+
 
 		# Buat titik fokus 1 kiri
 		x1, y1 = cv_coor(fokus, 0)
 		x2, y2 = cv_coor(fokus, 10)
 		pygame.draw.line(SCREEN, WHITE, (x1, y1), (x2,y2))
+		draw_text("F", x2, y2)
 
 		# titik fokus 2 kiri
 		x1, y1 = cv_coor(fokus * 2, 0)
 		x2, y2 = cv_coor(fokus * 2, 10)
 		pygame.draw.line(SCREEN, WHITE, (x1, y1), (x2,y2))
+		draw_text("2F", x2, y2)
 
 		# Buat titik fokus 1 kanan
 		x1, y1 = cv_coor(fokus * -1, 0)
 		x2, y2 = cv_coor(fokus * -1, 10)
 		pygame.draw.line(SCREEN, WHITE, (x1, y1), (x2,y2))
+		draw_text("F", x2, y2)
 
 		# titik fokus 2 kanan
 		x1, y1 = cv_coor(fokus * 2 * -1, 0)
 		x2, y2 = cv_coor(fokus * 2 * -1, 10)
 		pygame.draw.line(SCREEN, WHITE, (x1, y1), (x2,y2))
+		draw_text("2F", x2, y2)
 
+		# Box info
+		teks = [
+			f"Jarak Benda = ",
+			f"Tinggi Benda = ",
+			f"Titik Fokus = ",
+			f"Jarak Bayangan = ",
+			f"Tinggi Bayangan = ",
+		]
+		value = [
+			jarak_benda,
+			tinggi_benda,
+			fokus,
+			(int(jarak_bayangan)*-1),
+			(int(tinggi_bayangan)*-1),
+		]
+
+		x1 = SCREEN.get_width() - 100
+		y1 = 10
+		for txt, val in zip(teks, value):
+			teks_obj = FONT.render(txt, False, WHITE)
+			teks_rect = teks_obj.get_rect(topright=(x1, y1))
+			SCREEN.blit(teks_obj, teks_rect)
+
+			value_obj = FONT.render(str(val), False, WHITE)
+			SCREEN.blit(value_obj, (x1, y1))
+			y1 += 20
 
 		# Benda
 		# Buat sinar 1 ke tengah
 		x1, y1 = cv_coor(jarak_benda, tinggi_benda)
 		x2, y2 = cv_coor(0, tinggi_benda)
-		DDA((x1, y1), (x2,y2), BLUE)
+		pygame.draw.line(SCREEN, BLUE, (x1, y1), (x2,y2))
 
 		# Buat sinar 1 ke fokus
 		x1, y1 = cv_coor(0, tinggi_benda)
@@ -178,9 +251,8 @@ def main():
 		x2, y2 = cv_coor(jarak_benda, tinggi_benda)
 		pygame.draw.line(SCREEN, GREEN, (x1, y1), (x2,y2))
 
-		# Buat ngambil key yang ditekan
-		keys = pygame.key.get_pressed()
-		atur_gerakan(keys)
+
+		atur_gerakan()
 
 
 

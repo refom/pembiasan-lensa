@@ -222,7 +222,7 @@ class Benda:
 
 		# Sinar A ke fokus
 		x_b2, y_b2 = CvCoor.xy(Bayangan.jarak, Bayangan.tinggi * -1)
-		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))
+		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x_b2, y_b2))
 
 	@classmethod
 	def handle_mirror(cls):
@@ -418,7 +418,7 @@ class InputBox:
 		else:
 			self.text = str(self.value)
 			text_obj = UI.render_text(str(self.text), fg_color)
-		SCREEN.blit(text_obj, (self.rect.x + 5, self.rect.y + 5))
+		SCREEN.blit(text_obj, (self.rect.x, self.rect.y))
 
 	def check_collisions(self):
 		mouse_pos = pygame.mouse.get_pos()

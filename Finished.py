@@ -108,12 +108,9 @@ class Kartesius:
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed):
 		if key_pressed[pygame.K_q]:
-			cls.fokus -= 1
-		if key_pressed[pygame.K_e]:
 			cls.fokus += 1
-		
-		if key_pressed[pygame.K_1]:
-			print(int(clock.get_fps()))
+		if key_pressed[pygame.K_e]:
+			cls.fokus -= 1
 
 		if mouse_pressed[2]:
 			mouse_pos = pygame.mouse.get_pos()
@@ -139,17 +136,18 @@ class Kartesius:
 		DDA((x, y), (x, y - 10)) # F
 		Kartesius.draw_text("f", x, y)
 		
-		x = CvCoor.x(cls.fokus * -1)
-		DDA((x, y), (x, y - 10)) # F Mirror
-		Kartesius.draw_text("f", x, y)
-
 		x = CvCoor.x(cls.fokus * 2)
 		DDA((x, y), (x, y - 10)) # 2F
 		Kartesius.draw_text("r", x, y)
 
-		x = CvCoor.x(cls.fokus * 2 * -1)
-		DDA((x, y), (x, y - 10)) # 2F Mirror
-		Kartesius.draw_text("r", x, y)
+		if Menu.pilihan["cembung"]:
+			x = CvCoor.x(cls.fokus * -1)
+			DDA((x, y), (x, y - 10)) # F Mirror
+			Kartesius.draw_text("f", x, y)
+
+			x = CvCoor.x(cls.fokus * 2 * -1)
+			DDA((x, y), (x, y - 10)) # 2F Mirror
+			Kartesius.draw_text("r", x, y)
 
 	@staticmethod
 	def draw_text(teks, x, y):
@@ -165,7 +163,7 @@ class Benda:
 	panjang_sinar2 = 0
 
 	@classmethod
-	def draw(cls):
+	def draw_cembung(cls):
 		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
 
@@ -187,14 +185,6 @@ class Benda:
 			color_awal = DARK_GREEN
 			color_pantul = GREEN2
 
-		"""
-			Algoritma Sinar A
-		1. gambar garis dari titik x kartesius ke 0 (garis kebelakang)
-		2. gambar garis dari titik x kartesius ke titik fokus seberang
-		Panjang sinar 1 = sinar lurus
-		Panjang sinar 2 = sinar ke fokus
-		"""
-
 		# Sinar A ke garis kartesius
 		x_a1, y_a1 = persamaan((kt_x, y), (0, y), cls.panjang_sinar1)
 		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_a1, y_a1))
@@ -206,6 +196,33 @@ class Benda:
 		# Sinar C
 		x_new, y_new = persamaan((kt_x, kt_y), (x, y), 0)
 		pygame.draw.line(SCREEN, BLUE, (kt_x, kt_y), (x_new, y_new))
+
+	@classmethod
+	def draw_cekung(cls):
+		# Kordinat Kartesius
+		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
+
+		# Kordinat Fokus
+		fokus = CvCoor.x(Kartesius.fokus)
+
+		# Kordinat Benda
+		x, y = CvCoor.xy(cls.jarak, cls.tinggi)
+		# Gambar Benda
+		DDA((x, kt_y), (x, y))
+		# kalau ada night mode, set warna
+		if Button.night_mode:
+			color_awal = GREEN
+			color_pantul = GREENYELLOW
+		else:
+			color_awal = DARK_GREEN
+			color_pantul = GREEN2
+
+		# Sinar A ke garis kartesius
+		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x, y))
+
+		# Sinar A ke fokus
+		x_b2, y_b2 = CvCoor.xy(Bayangan.jarak, Bayangan.tinggi * -1)
+		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))
 
 	@classmethod
 	def handle_mirror(cls):
@@ -236,8 +253,8 @@ class Benda:
 			cls.tinggi += 1
 		if key_pressed[pygame.K_s]:
 			cls.tinggi -= 1
-		
-		if mouse_pressed[0]:
+
+		if mouse_pressed[0] and not Button.check_mouse_col() and not InputBox.check_mouse_col():
 			mouse_pos = pygame.mouse.get_pos()
 			cls.jarak = (mouse_pos[0] - width//2) * -1
 			cls.tinggi = (mouse_pos[1] - height//2) * -1
@@ -259,7 +276,7 @@ class Bayangan:
 				cls.tinggi = 0
 
 	@classmethod
-	def draw(cls):
+	def draw_cembung(cls):
 		# Kordinat Kartesius
 		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
 
@@ -289,6 +306,29 @@ class Bayangan:
 		x_new, y_new = persamaan((kt_x, kt_y), (x, y), width)
 		pygame.draw.line(SCREEN, DEEPSKYBLUE, (kt_x, kt_y), (x_new, y_new))
 
+	@classmethod
+	def draw_cekung(cls):
+		# Kordinat Kartesius
+		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
+
+		# Kordinat Fokus
+		fokus = CvCoor.x(Kartesius.fokus)
+
+		# Kordinat Bayangan
+		x, y = CvCoor.xy(cls.jarak, cls.tinggi * -1)
+		# Gambar Bayangan
+		DDA((x, kt_y), (x, y))
+		# warna
+		color_awal = RED
+		color_pantul = DEEPPINK
+
+		# Sinar B ke garis kartesius
+		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x, y))
+
+		# Sinar B ke fokus
+		x_b2, y_b2 = CvCoor.xy(Benda.jarak, Benda.tinggi)
+		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))
+
 class UI:
 	size = 22
 
@@ -298,10 +338,6 @@ class UI:
 			font = pygame.font.Font(None, cls.size)
 		text_obj = font.render(str(teks), False, color)
 		return text_obj
-
-	@classmethod
-	def display_text(cls, text_obj, xy):
-		SCREEN.blit(text_obj, (xy[0], xy[1]))
 
 	@classmethod
 	def draw(cls):
@@ -321,22 +357,80 @@ class UI:
 
 class Button:
 	night_mode = True
+	all_button = []
 
 	def __init__(self, x, y, w, h, color):
-		self.x = x
-		self.y = y
-		self.w = w
-		self.h = h
 		self.rect = pygame.Rect((x, y), (w, h))
 		self.color = color
+		self.all_button.append(self)
 
 	def draw(self):
 		pygame.draw.rect(SCREEN, self.color, self.rect, 0, 15)
 
-	@staticmethod
-	def check_collisions(a_x, a_y, a_width, a_height, b_x, b_y, b_width, b_height):
-		return (a_x + a_width > b_x) and (a_x < b_x + b_width) and (a_y + a_height > b_y) and (a_y < b_y + b_height)
+	def check_collisions(self):
+		mouse_pos = pygame.mouse.get_pos()
+		if self.rect.collidepoint(mouse_pos):
+			return True
 
+	@classmethod
+	def check_mouse_col(cls):
+		if cls.all_button:
+			for btn in cls.all_button:
+				if btn.check_collisions():
+					return True
+
+class InputBox:
+	all_input_box = []
+
+	def __init__(self, x, y, w, h, value):
+		self.rect = pygame.Rect(x, y, w, h)
+		self.value = value
+		self.text = str(value)
+		self.active = False
+		self.change = False
+		self.all_input_box.append(self)
+
+	def handle_event(self, events):
+		for event in events:
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				if self.rect.collidepoint(event.pos):
+					self.active = not self.active
+				else:
+					self.active = False
+
+			if event.type == pygame.KEYDOWN:
+				if self.active:
+					if event.key == pygame.K_RETURN:
+						try:
+							self.value = int(self.text)
+						except:
+							self.value = 100
+						self.active = False
+						self.change = True
+					elif event.key == pygame.K_BACKSPACE:
+						self.text = self.text[:-1]
+					else:
+						self.text += event.unicode
+
+	def draw(self):
+		if self.active:
+			text_obj = UI.render_text(str(self.text), GREEN)
+		else:
+			self.text = str(self.value)
+			text_obj = UI.render_text(str(self.text), fg_color)
+		SCREEN.blit(text_obj, (self.rect.x + 5, self.rect.y + 5))
+
+	def check_collisions(self):
+		mouse_pos = pygame.mouse.get_pos()
+		if self.rect.collidepoint(mouse_pos):
+			return True
+
+	@classmethod
+	def check_mouse_col(cls):
+		if cls.all_input_box:
+			for box in cls.all_input_box:
+				if box.check_collisions():
+					return True
 
 class Menu:
 	pilihan = {
@@ -353,29 +447,26 @@ class Menu:
 		text_obj = UI.render_text("Pembiasan Cahaya", fg_color, font)
 		SCREEN.blit(text_obj, (x, y))
 
-		# Cembung
-		x, y = width//7, height//2
-		w, h = 300, 100
-		lensa_cembung = Button(x, y, w, h, fg_color)
-
-		# Cekung
-		x, y = width//7 + width//3, height//2
-		w, h = 300, 100
-		cermin_cekung = Button(x, y, w, h, fg_color)
-
 		# Handle click
+		lensa_cembung.rect.x, lensa_cembung.rect.y = SCREEN.get_width()//7, SCREEN.get_height()//2
+		cermin_cekung.rect.x, cermin_cekung.rect.y = SCREEN.get_width()//7 + SCREEN.get_width()//3, SCREEN.get_height()//2
+
 		mouse_pos = pygame.mouse.get_pos()
-		if Button.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, lensa_cembung.x, lensa_cembung.y, lensa_cembung.w, lensa_cembung.h):
+		if lensa_cembung.check_collisions():
 			lensa_cembung.color = GRAY
 			if mouse_pressed[0]:
 				Menu.pilihan["menu"] = False
 				Menu.pilihan["cembung"] = True
+		else:
+			lensa_cembung.color = fg_color
 
-		if Button.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, cermin_cekung.x, cermin_cekung.y, cermin_cekung.w, cermin_cekung.h):
+		if cermin_cekung.check_collisions():
 			cermin_cekung.color = GRAY
 			if mouse_pressed[0]:
 				Menu.pilihan["menu"] = False
 				Menu.pilihan["cekung"] = True
+		else:
+			cermin_cekung.color = fg_color
 
 		# Draw
 		lensa_cembung.draw()
@@ -392,40 +483,43 @@ class Menu:
 		SCREEN.blit(text_obj, text_rect)
 
 	@staticmethod
-	def cembung(key_pressed, mouse_pressed):
+	def both(key_pressed, mouse_pressed, events):
 		# Handle Movement
 		Benda.handle_movement(key_pressed, mouse_pressed)
 		Kartesius.handle_movement(key_pressed, mouse_pressed)
 
-		# Back button
-		x, y = 10, 70
-		w, h = 50, 30
-		back = Button(x, y, w, h, fg_color)
+		input_fokus.handle_event(events)
+		input_jarak.handle_event(events)
+		input_tinggi.handle_event(events)
 
-		mouse_pos = pygame.mouse.get_pos()
-		if Button.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, back.x, back.y, back.w, back.h):
-			back.color = GRAY
-			if mouse_pressed[0]:
-				Menu.pilihan["cembung"] = False
-				Menu.pilihan["menu"] = True
+		# Fokus
+		if input_fokus.change:
+			Kartesius.fokus = input_fokus.value
+			input_fokus.change = False
+		else:
+			input_fokus.value = Kartesius.fokus
+
+		# Jarak Benda
+		if input_jarak.change:
+			Benda.jarak = input_jarak.value
+			input_jarak.change = False
+		else:
+			input_jarak.value = Benda.jarak
+
+		# Tinggi Benda
+		if input_tinggi.change:
+			Benda.tinggi = input_tinggi.value
+			input_tinggi.change = False
+		else:
+			input_tinggi.value = Benda.tinggi
 
 		# Handle Bayangan
 		Bayangan.update()
 
-		# Handle Mirror
-		Kartesius.handle_mirror()
-		Benda.handle_mirror()
-
-		# ===== Draw
+		# ==== Draw
 		# Kartesius
 		Kartesius.draw()
 		Kartesius.draw_fokus()
-
-		# Benda
-		Benda.draw()
-
-		# Bayangan
-		Bayangan.draw()
 
 		# Gambar info
 		w, h = 370, 70
@@ -444,12 +538,19 @@ class Menu:
 		pygame.draw.rect(base, DARK_GRAY2, base.get_rect(), 0, 15)
 		SCREEN.blit(base, (-20, height - base.get_height() + 20))
 
+		teks = [
+			f"Tinggi Bayangan = ",
+			f"Jarak Bayangan = ",
+			f"Tinggi Benda = ",
+			f"Jarak Benda = ",
+			f"Titik Fokus = ",
+		]
 		value = [
 			Bayangan.tinggi,
 			Bayangan.jarak,
-			Benda.jarak,
-			Benda.tinggi,
-			Kartesius.fokus,
+			input_tinggi,
+			input_jarak,
+			input_fokus,
 		]
 
 		# Ambil dalam kotak
@@ -461,8 +562,12 @@ class Menu:
 			text_rect = text_obj.get_rect(topright=(x_text, y_text))
 			SCREEN.blit(text_obj, text_rect)
 
-			val_obj = UI.render_text(str(v), fg_color)
-			SCREEN.blit(val_obj, (x_text, y_text))
+			if type(v) == int:
+				val_obj = UI.render_text(str(v), fg_color)
+				SCREEN.blit(val_obj, (x_text, y_text))
+			else:
+				v.rect.x, v.rect.y = x_text, y_text
+				v.draw()
 			y_text -= 25
 
 		# Back
@@ -472,17 +577,72 @@ class Menu:
 		SCREEN.blit(text_obj, text_rect)
 
 	@staticmethod
-	def cekung():
-		pass
+	def cembung(mouse_pressed):
+		mouse_pos = pygame.mouse.get_pos()
+		if back.check_collisions():
+			back.color = GRAY
+			if mouse_pressed[0]:
+				Menu.pilihan["cembung"] = False
+				Menu.pilihan["menu"] = True
+		else:
+			back.color = fg_color
+
+		# Handle Mirror
+		Kartesius.handle_mirror()
+		Benda.handle_mirror()
+
+		# ===== Draw
+		# Benda
+		Benda.draw_cembung()
+
+		# Bayangan
+		Bayangan.draw_cembung()
+
+	@staticmethod
+	def cekung(mouse_pressed):
+		mouse_pos = pygame.mouse.get_pos()
+		if back.check_collisions():
+			back.color = GRAY
+			if mouse_pressed[0]:
+				Menu.pilihan["cekung"] = False
+				Menu.pilihan["menu"] = True
+		else:
+			back.color = fg_color
+
+		# ===== Draw
+		# Benda
+		Benda.draw_cekung()
+
+		# Bayangan
+		Bayangan.draw_cekung()
 
 
-teks = [
-	f"Tinggi Bayangan = ",
-	f"Jarak Bayangan = ",
-	f"Jarak Benda = ",
-	f"Tinggi Benda = ",
-	f"Titik Fokus = ",
-]
+# Night mode
+x, y = SCREEN.get_width() - 90, 50
+w, h = 50, 50
+night_mode = Button(x, y, w, h, WHITE)
+
+# Cembung
+x, y = SCREEN.get_width()//7, SCREEN.get_height()//2
+w, h = 300, 100
+lensa_cembung = Button(x, y, w, h, WHITE)
+Button.all_button.remove(lensa_cembung)
+
+# Cekung
+x, y = SCREEN.get_width()//7 + SCREEN.get_width()//3, SCREEN.get_height()//2
+cermin_cekung = Button(x, y, w, h, WHITE)
+Button.all_button.remove(cermin_cekung)
+
+# Back button
+x, y = 10, 70
+w, h = 50, 30
+back = Button(x, y, w, h, WHITE)
+
+# fokus
+input_fokus = InputBox(0, 0, 100, 24, Kartesius.fokus)
+input_jarak = InputBox(0, 0, 100, 24, Benda.jarak)
+input_tinggi = InputBox(0, 0, 100, 24, Benda.tinggi)
+
 
 # Bagian utama
 def main():
@@ -494,13 +654,12 @@ def main():
 
 	# Event Handler
 	while run:
+		events = pygame.event.get()
+
 		width = SCREEN.get_width()
 		height = SCREEN.get_height()
 
-		# Night mode
-		x, y = width - 90, 50
-		w, h = 50, 50
-		night_mode = Button(x, y, w, h, WHITE)
+		night_mode.rect.x = width - 90
 
 		# Get Input
 		key_pressed = pygame.key.get_pressed()
@@ -508,7 +667,7 @@ def main():
 
 		# Handle night mode
 		mouse_pos = pygame.mouse.get_pos()
-		if Button.check_collisions(mouse_pos[0], mouse_pos[1], 3, 3, night_mode.x, night_mode.y, night_mode.w, night_mode.h):
+		if night_mode.check_collisions():
 			night_mode.color = GRAY
 			if mouse_pressed[0]:
 				if Button.night_mode:
@@ -540,13 +699,18 @@ def main():
 
 		if Menu.pilihan['menu']:
 			Menu.menu(mouse_pressed)
-		if Menu.pilihan['cembung']:
-			Menu.cembung(key_pressed, mouse_pressed)
+		elif Menu.pilihan['cembung']:
+			Menu.cembung(mouse_pressed)
+		elif Menu.pilihan['cekung']:
+			Menu.cekung(mouse_pressed)
+
+		if Menu.pilihan['cembung'] or Menu.pilihan['cekung']:
+			Menu.both(key_pressed, mouse_pressed, events)
 
 		# Tampilkan apa yg sudah digambar
 		pygame.display.update()
 
-		for event in pygame.event.get():
+		for event in events:
 			if event.type == pygame.QUIT:
 				run = False
 			if event.type == pygame.KEYDOWN:

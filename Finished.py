@@ -437,6 +437,7 @@ class Menu:
 		"menu": True,
 		"cembung": False,
 		"cekung": False,
+		"credits": False,
 	}
 
 	@staticmethod
@@ -447,10 +448,10 @@ class Menu:
 		text_obj = UI.render_text("Pembiasan Cahaya", fg_color, font)
 		SCREEN.blit(text_obj, (x, y))
 
-		# Handle click
 		lensa_cembung.rect.x, lensa_cembung.rect.y = SCREEN.get_width()//7, SCREEN.get_height()//2
 		cermin_cekung.rect.x, cermin_cekung.rect.y = SCREEN.get_width()//7 + SCREEN.get_width()//3, SCREEN.get_height()//2
 
+		# Handle click
 		mouse_pos = pygame.mouse.get_pos()
 		if lensa_cembung.check_collisions():
 			lensa_cembung.color = GRAY
@@ -468,9 +469,22 @@ class Menu:
 		else:
 			cermin_cekung.color = fg_color
 
+		if credits_btn.check_collisions():
+			credits_btn.color = GRAY
+			if mouse_pressed[0]:
+				Menu.pilihan["menu"] = False
+				Menu.pilihan["credits"] = True
+		else:
+			credits_btn.color = fg_color
+
+		# Credits
+		credits_btn.rect.x = width - 110
+		credits_btn.rect.y = height - 50
+
 		# Draw
 		lensa_cembung.draw()
 		cermin_cekung.draw()
+		credits_btn.draw()
 
 		# Text Cembung
 		font = pygame.font.Font(None, 45)
@@ -481,6 +495,15 @@ class Menu:
 		text_obj = UI.render_text("Cermin Cekung", bg_color, font)
 		text_rect = text_obj.get_rect(center=cermin_cekung.rect.center)
 		SCREEN.blit(text_obj, text_rect)
+
+		# Credits
+		text_obj = UI.render_text("Credits", bg_color)
+		text_rect = text_obj.get_rect(center=credits_btn.rect.center)
+		SCREEN.blit(text_obj, text_rect)
+
+		# Set kembali Backnya
+		back.rect.x = 10
+		back.rect.y = 70
 
 	@staticmethod
 	def both(key_pressed, mouse_pressed, events):
@@ -616,6 +639,46 @@ class Menu:
 		# Bayangan
 		Bayangan.draw_cekung()
 
+	@staticmethod
+	def credits(mouse_pressed):
+		mouse_pos = pygame.mouse.get_pos()
+		if back.check_collisions():
+			back.color = GRAY
+			if mouse_pressed[0]:
+				Menu.pilihan["credits"] = False
+				Menu.pilihan["menu"] = True
+		else:
+			back.color = fg_color
+
+		font = pygame.font.Font(None, 60)
+		for crd in credits_list:
+			text_obj = UI.render_text(crd[1], fg_color, font)
+			text_rect = text_obj.get_rect(center=crd[0])
+			SCREEN.blit(text_obj, text_rect)
+			crd[0][0] = width//2
+			crd[0][1] -= 1
+			if crd[0][1] < 0:
+				crd[0][1] = SCREEN.get_height() + SCREEN.get_height()//4
+
+		# Back
+		back.rect.x = 10
+		back.rect.y = 10
+		back.draw()
+		text_obj = UI.render_text("Back", bg_color)
+		text_rect = text_obj.get_rect(center=back.rect.center)
+		SCREEN.blit(text_obj, text_rect)
+
+x, y = SCREEN.get_width()//2, SCREEN.get_height() + SCREEN.get_height()//4
+credits_list = [
+	[[x, y], "Alyusufi Bima Rizki Utama - 11191008"],
+	[[x, y], "Muhammad Rafliadi - 11191052"],
+	[[x, y], "Rani Meliyana Putri - 11191062"],
+	[[x, y], "Yashmine Hapsari - 11181083"],
+]
+
+for crd in credits_list:
+	crd[0][1] = y
+	y += 60
 
 # Night mode
 x, y = SCREEN.get_width() - 90, 50
@@ -632,6 +695,12 @@ Button.all_button.remove(lensa_cembung)
 x, y = SCREEN.get_width()//7 + SCREEN.get_width()//3, SCREEN.get_height()//2
 cermin_cekung = Button(x, y, w, h, WHITE)
 Button.all_button.remove(cermin_cekung)
+
+# Credits
+x, y = SCREEN.get_width() - 110, SCREEN.get_height() - 50
+w, h = 100, 40
+credits_btn = Button(x, y, w, h, WHITE)
+Button.all_button.remove(credits_btn)
 
 # Back button
 x, y = 10, 70
@@ -658,8 +727,6 @@ def main():
 
 		width = SCREEN.get_width()
 		height = SCREEN.get_height()
-
-		night_mode.rect.x = width - 90
 
 		# Get Input
 		key_pressed = pygame.key.get_pressed()
@@ -692,6 +759,7 @@ def main():
 		SCREEN.fill(bg_color)
 
 		# Button
+		night_mode.rect.x = width - 90
 		night_mode.draw()
 		
 		# User Interface
@@ -703,6 +771,8 @@ def main():
 			Menu.cembung(mouse_pressed)
 		elif Menu.pilihan['cekung']:
 			Menu.cekung(mouse_pressed)
+		elif Menu.pilihan['credits']:
+			Menu.credits(mouse_pressed)
 
 		if Menu.pilihan['cembung'] or Menu.pilihan['cekung']:
 			Menu.both(key_pressed, mouse_pressed, events)

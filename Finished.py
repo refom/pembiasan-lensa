@@ -650,15 +650,16 @@ class Menu:
 		else:
 			back.color = fg_color
 
-		font = pygame.font.Font(None, 60)
 		for crd in credits_list:
-			text_obj = UI.render_text(crd[1], fg_color, font)
+			text_obj = UI.render_text(crd[1], fg_color, crd[2])
 			text_rect = text_obj.get_rect(center=crd[0])
 			SCREEN.blit(text_obj, text_rect)
 			crd[0][0] = width//2
-			crd[0][1] -= 1
+			crd[0][1] -= 2
 			if crd[0][1] < 0:
-				crd[0][1] = SCREEN.get_height() + SCREEN.get_height()//4
+				crd[0][1] = credits_list[-1][0][1] + credits_list[-1][3]
+				name = credits_list.pop(0)
+				credits_list.append(name)
 
 		# Back
 		back.rect.x = 10
@@ -669,16 +670,34 @@ class Menu:
 		SCREEN.blit(text_obj, text_rect)
 
 x, y = SCREEN.get_width()//2, SCREEN.get_height() + SCREEN.get_height()//4
+font_judul = pygame.font.Font(None, 100)
+font_h2 = pygame.font.Font(None, 80)
+font_h3 = pygame.font.Font(None, 70)
+font_nama = pygame.font.Font(None, 50)
+font_space1 = 80
+font_space2 = 60
+font_space_jump = 400
+font_space_jump_high = 650
 credits_list = [
-	[[x, y], "Alyusufi Bima Rizki Utama - 11191008"],
-	[[x, y], "Muhammad Rafliadi - 11191052"],
-	[[x, y], "Rani Meliyana Putri - 11191062"],
-	[[x, y], "Yashmine Hapsari - 11181083"],
+	[[x, y], "GRAFIKA KOMPUTER - B", font_judul, font_space1],
+	[[x, y], "Projek 1 - Pembiasan Cahaya", font_h2, font_space2],
+	[[x, y], " ", font_h2, font_space_jump],
+	[[x, y], " |=| Brought by Group 8 |=| ", font_h3, font_space1],
+	[[x, y], " ", font_h2, font_space_jump],
+	[[x, y], "-- Our Team --", font_h3, font_space1],
+	[[x, y], "Alyusufi Bima Rizki Utama - 11191008", font_nama, font_space2],
+	[[x, y], "Muhammad Rafliadi - 11191052", font_nama, font_space2],
+	[[x, y], "Rani Meliyana Putri - 11191062", font_nama, font_space2],
+	[[x, y], "Yashmine Hapsari - 11181083", font_nama, font_space2],
+	[[x, y], " ", font_h2, font_space_jump_high],
+	[[x, y], "Made with love <3", font_nama, 50],
+	[[x, y], "   - Reforms     ", font_nama, font_space2],
+	[[x, y], " ", font_h2, font_space_jump_high],
 ]
 
 for crd in credits_list:
 	crd[0][1] = y
-	y += 60
+	y += crd[3]
 
 # Night mode
 x, y = SCREEN.get_width() - 90, 50

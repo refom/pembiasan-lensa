@@ -3,7 +3,6 @@ import pygame
 from pygame import gfxdraw
 from pygame.math import Vector2
 
-
 class COLORS:
 	# Color
 	white = (255,255,255)
@@ -15,6 +14,7 @@ class COLORS:
 	deeppink = (255,20,147)
 
 	green = (0, 255, 0)
+	light_green = (102, 255, 102)
 	greenyellow = (173,255,47)
 	green2 = (0,170,0)
 	dark_green = (0,100,0)
@@ -38,6 +38,7 @@ class FontText:
 		cls.font_normal = pygame.font.Font(cls.normal, 24)
 		cls.font_semi_normal = pygame.font.Font(cls.normal, 21)
 		cls.font_title = pygame.font.Font(cls.title, 100)
+		# cls.font_title_h1 = pygame.font.Font(cls.title, 80)
 		cls.font_h1 = pygame.font.Font(cls.normal, 80)
 		cls.font_h2 = pygame.font.Font(cls.normal, 60)
 		cls.font_h3 = pygame.font.Font(cls.normal, 40)
@@ -46,7 +47,6 @@ class FontText:
 	def render(surface, font, pos, text, aa, color):
 		teks = font.render(str(text), aa, color)
 		surface.blit(teks, teks.get_rect(center=pos))
-
 
 class Button:
 	all_buttons = []
@@ -114,7 +114,6 @@ class Button:
 	def clear_all(cls):
 		cls.all_buttons.clear()
 
-
 def DDA(xy1, xy2, surface, color):
 	# Variabel lokal
 	x = xy1[0]
@@ -146,7 +145,6 @@ def DDA(xy1, xy2, surface, color):
 		except:
 			x = int(x)
 			y = int(y)
-
 
 class CvCoor:
 	size = (0, 0)
@@ -181,7 +179,6 @@ def persamaan(xy1, xy2, panjang):
 	m = gradien(xy1, xy2)
 	y = xy2[1] + m * (panjang - xy2[0])
 	return panjang, y
-
 
 class InputBox:
 	all_input_box = []
@@ -222,7 +219,7 @@ class InputBox:
 
 	def render(self, surface):
 		if self.active:
-			text_obj = FontText.font_normal.render(str(self.text), True, COLORS.green2)
+			text_obj = FontText.font_normal.render(str(self.text), True, COLORS.light_green)
 		else:
 			self.text = str(self.value)
 			text_obj = FontText.font_normal.render(str(self.text), True, COLORS.black)
@@ -235,7 +232,7 @@ class InputBox:
 				box.func_set(box.value)
 				box.change = False
 			else:
-				box.value = abs(box.func_get())
+				box.value = box.func_get()
 
 	def check_collisions(self, mouse_pos):
 		if self.rect.collidepoint(mouse_pos):

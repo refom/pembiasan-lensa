@@ -3,7 +3,6 @@ import pygame
 from pygame.math import Vector2
 from utility import DDA, CvCoor, COLORS, FontText, persamaan, Button, InputBox
 
-
 class Kartesius:
 	pos = Vector2(0, 0)
 	fokus = 100
@@ -116,6 +115,10 @@ class Benda:
 			w *= -1
 		if h < 0:
 			h *= -1
+		if w > 1000:
+			w = 1000
+		if h > 1000:
+			h = 1000
 		img = pygame.transform.scale(img, (w, h))
 		rect = img.get_rect(topleft=(x, y))
 		if cls.mirror_y:
@@ -171,7 +174,7 @@ class Benda:
 
 	@classmethod
 	def get_jarak(cls):
-		return cls.jarak
+		return abs(cls.jarak)
 
 	@classmethod
 	def set_tinggi(cls, value):
@@ -245,6 +248,10 @@ class Bayangan:
 			w *= -1
 		if h < 0:
 			h *= -1
+		if w > 1000:
+			w = 1000
+		if h > 1000:
+			h = 1000
 		img = pygame.transform.scale(img, (w, h))
 		rect = img.get_rect(topleft=(x, y))
 		if cls.mirror_y:
@@ -293,4 +300,3 @@ class Bayangan:
 		# Sinar B ke fokus
 		x_b2, y_b2 = CvCoor.xy(Benda.jarak, Benda.tinggi)
 		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))
-

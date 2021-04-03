@@ -51,7 +51,6 @@ class Window:
 	def blit(self, surface, pos):
 		self.surface.blit(surface, pos)
 
-
 def main():
 	global menu, window, night_mode, partikel, box_info
 	global jarak_box, tinggi_box, fokus_box, back, bg_path
@@ -101,9 +100,8 @@ def main():
 		elif menu.credits:
 			window.set_caption("Credits")
 			menu.render_credits()
-		
-	pygame.quit()
 
+	pygame.quit()
 
 class Menu:
 	def __init__(self):
@@ -234,13 +232,6 @@ class Menu:
 			window.update()
 
 			self.render_sama(events)
-
-			if night_mode.on:
-				Benda.color_awal = COLORS.green
-				Benda.color_pantul = COLORS.greenyellow
-			else:
-				Benda.color_awal = COLORS.dark_green
-				Benda.color_pantul = COLORS.green2
 
 			Benda.render_cembung(window.surface)
 			Bayangan.render_cembung(window.surface)
@@ -378,6 +369,13 @@ class Menu:
 		Bayangan.handle_mirror(menu)
 
 		Kartesius.render(window.surface, menu)
+
+		if night_mode.on:
+			Benda.color_awal = COLORS.green
+			Benda.color_pantul = COLORS.greenyellow
+		else:
+			Benda.color_awal = COLORS.dark_green
+			Benda.color_pantul = COLORS.green2
 
 		InputBox.handle_event(events)
 

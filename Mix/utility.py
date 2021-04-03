@@ -221,8 +221,11 @@ class InputBox:
 		if self.active:
 			text_obj = FontText.font_normal.render(str(self.text), True, COLORS.light_green)
 		else:
+			color = COLORS.black
 			self.text = str(self.value)
-			text_obj = FontText.font_normal.render(str(self.text), True, COLORS.black)
+			if self.check_collisions(pygame.mouse.get_pos()):
+				color = COLORS.whitesmoke
+			text_obj = FontText.font_normal.render(str(self.text), True, color)
 		surface.blit(text_obj, (self.rect.x, self.rect.y))
 
 	@classmethod

@@ -82,9 +82,9 @@ def main():
 	box_info = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "box_info.png"))
 
 	# Input Box
-	jarak_box = InputBox((0, 0), (100, 24), Benda.jarak, Benda.set_jarak, Benda.get_jarak)
-	tinggi_box = InputBox((0, 0), (100, 24), Benda.tinggi, Benda.set_tinggi, Benda.get_tinggi)
-	fokus_box = InputBox((0, 0), (100, 24), Kartesius.fokus, Kartesius.set_fokus, Kartesius.get_fokus)
+	jarak_box = InputBox((0, 0), (50, 24), Benda.jarak, Benda.set_jarak, Benda.get_jarak)
+	tinggi_box = InputBox((0, 0), (50, 24), Benda.tinggi, Benda.set_tinggi, Benda.get_tinggi)
+	fokus_box = InputBox((0, 0), (50, 24), Kartesius.fokus, Kartesius.set_fokus, Kartesius.get_fokus)
 
 	while menu.run:
 		

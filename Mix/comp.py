@@ -1,7 +1,7 @@
 import pygame
 
 from pygame.math import Vector2
-from utility import DDA, CvCoor, COLORS, FontText, persamaan, Button, InputBox
+from utility import DDA, CvCoor, COLORS, FontText, persamaan, Button, InputBox, Tema
 
 class Kartesius:
 	pos = Vector2(0, 0)
@@ -56,7 +56,6 @@ class Kartesius:
 		return cls.fokus
 
 class Benda:
-	img = None
 	jarak = 200
 	tinggi = 100
 	sinar_1 = 0
@@ -65,10 +64,6 @@ class Benda:
 	mirror_y = False
 	color_awal = COLORS.green
 	color_pantul = COLORS.greenyellow
-
-	@classmethod
-	def set_image(cls, path):
-		cls.img = pygame.image.load(path)
 
 	@classmethod
 	def render_cembung(cls, surface):
@@ -108,7 +103,7 @@ class Benda:
 	@classmethod
 	def draw(cls, surface, x, y, kt_y):
 		# Gambar benda
-		img = pygame.transform.flip(cls.img, cls.mirror_x, cls.mirror_y)
+		img = pygame.transform.flip(Tema.curr_chr, cls.mirror_x, cls.mirror_y)
 		size = img.get_size()
 		w, h = cls.tinggi * size[0]//size[1], cls.tinggi
 		if w < 0:
@@ -240,7 +235,7 @@ class Bayangan:
 	@classmethod
 	def draw(cls, surface, x, y, kt_y):
 		# Bayangan
-		img = pygame.transform.flip(Benda.img, cls.mirror_x, cls.mirror_y)
+		img = pygame.transform.flip(Tema.curr_chr, cls.mirror_x, cls.mirror_y)
 		img.set_alpha(155)
 		size = img.get_size()
 		w, h = cls.tinggi * size[0]//size[1], cls.tinggi

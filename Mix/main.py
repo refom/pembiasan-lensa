@@ -1,17 +1,14 @@
 import pygame, time, os, random
 
 from pygame.math import Vector2
-from utility import COLORS, FontText, Button, CvCoor, InputBox
+from utility import COLORS, FontText, Button, CvCoor, InputBox, Tema
 from comp import Kartesius, Benda, Bayangan
 from particle import Particle
 
 class Window:
 	def __init__(self, screen_size):
 		pygame.init()
-		self.size = Vector2(screen_size)
-		self.bg = [None]
-		self.current_bg = None
-		self.index_bg = 1
+		self.size = screen_size
 
 		# Display Screen
 		pygame.display.set_caption("Pembiasan Cahaya")
@@ -22,28 +19,18 @@ class Window:
 		self.FPS = 120
 
 	def update(self):
-		self.size.xy = (self.surface.get_width(), self.surface.get_height())
-		CvCoor.update(self.size.xy)
+		self.size = (self.surface.get_width(), self.surface.get_height())
+		CvCoor.update(self.size)
 
 		self.clock.tick(self.FPS)
 
-		if self.current_bg:
-			self.surface.blit(self.current_bg, (0,0))
+		if Tema.curr_bg:
+			bg = pygame.transform.scale(Tema.curr_bg, self.surface.get_size())
+			self.surface.blit(bg, (0,0))
 		else:
 			self.surface.fill(COLORS.bg_color)
 		
 		Menu.render_all()
-
-	def add_bg(self, path):
-		bg = pygame.image.load(path)
-		bg = pygame.transform.scale(bg, self.surface.get_size())
-		self.bg.append(bg)
-
-	def set_bg(self):
-		self.current_bg = self.bg[self.index_bg]
-		self.index_bg += 1
-		if self.index_bg > len(self.bg)-1:
-			self.index_bg = 0
 
 	def set_caption(self, title):
 		pygame.display.set_caption(title)
@@ -53,20 +40,33 @@ class Window:
 
 def main():
 	global menu, window, night_mode, partikel, box_info
-	global jarak_box, tinggi_box, fokus_box, back, bg_path
+	global jarak_box, tinggi_box, fokus_box, back
 
 	menu = Menu()
 	window = Window((1000, 640))
-	# Background
-	window.add_bg(os.path.join(os.getcwd(), "data", "img", "desert.png"))
+
+	# Default Benda
+	Tema.add_chr(os.path.join(os.getcwd(), "data", "img", "cactus.png"))
+	Tema.set_default()
+
+	# Tema 1
+	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "desert.png"))
+	Tema.add_chr(os.path.join(os.getcwd(), "data", "img", "cactus.png"))
+	Tema.set_theme([1, 1])
+
+	# Tema 2
+	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "planet.jpeg"))
+	Tema.add_chr(os.path.join(os.getcwd(), "data", "img", "rocket.png"))
+	Tema.set_theme([2, 2])
+
+	# Tema 3
+	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "night_moon.jpeg"))
+	Tema.set_theme([3, 2])
 
 	# Font
 	FontText.title = os.path.join(os.getcwd(), "data", "font", "title.otf")
 	FontText.normal = os.path.join(os.getcwd(), "data", "font", "normal.ttf")
 	FontText.update()
-	
-	# Benda
-	Benda.set_image(os.path.join(os.getcwd(), "data", "img", "cactus.png"))
 
 	# Night Mode Button
 	night_mode = Button((0,0), (50, 50), "N", statik=True, font=FontText.font_normal)
@@ -114,9 +114,9 @@ class Menu:
 	@staticmethod
 	def render_all():
 		# Fps
-		x, y = window.size.x - 50, 30
+		x, y = window.size[0] - 50, 30
 		fps = int(window.clock.get_fps())
-		color = COLORS.green
+		color = COLORS.green_shade
 		if fps < 35:
 			color = COLORS.red
 		text = FontText.font_22.render(f"FPS = {fps}", True, color)
@@ -137,7 +137,7 @@ class Menu:
 			COLORS.fg_color = COLORS.black
 			COLORS.bg_color = COLORS.whitesmoke
 
-		night_mode.pos.xy = (window.size.x - 50, 75)
+		night_mode.pos.xy = (window.size[0] - 50, 75)
 		night_mode.render(window.surface, mouse_pos)
 
 		# Particle
@@ -146,13 +146,15 @@ class Menu:
 
 	def render_menu(self):
 		# Button
-		wh = (window.size.x//3, 100)
+		wh = (300, 80)
 		btn_cembung = Button((0,0), wh, "Lensa Cembung")
 		btn_cekung = Button((0,0), wh, "Cermin Cekung")
 		btn_credits = Button((0,0), wh, "Credits")
 
-		btn_revers = Button((0,0), (200, 50), "Reverse Button", font=FontText.font_semi_normal, shade=False)
-		btn_bg = Button((0,0), (200, 50), "Change Background", font=FontText.font_semi_normal, shade=False)
+		title_white = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_white.png"))
+		title_black = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_black.png"))
+
+		btn_theme = Button((0,0), (150, 50), "Change Theme", font=FontText.font_semi_normal, shade=False)
 
 		while self.menu:
 			events = pygame.event.get()
@@ -178,32 +180,33 @@ class Menu:
 					if btn_credits.check_collisions(event.pos):
 						self.menu = False
 						self.credits = True
-					if btn_revers.check_collisions(event.pos):
-						Button.revers = not Button.revers
-					if btn_bg.check_collisions(event.pos):
-						window.set_bg()
+					if btn_theme.check_collisions(event.pos):
+						Tema.change_theme()
 
 			window.update()
 
 			# Judul
-			x, y = window.size.x//2, window.size.y//2 - window.size.y//3
-			FontText.render(window, FontText.font_title, (x + 4, y + 4), "Pembiasan Cahaya", True, COLORS.gray)
-			FontText.render(window, FontText.font_title, (x, y), "Pembiasan Cahaya", True, COLORS.fg_color)
+			x, y = window.size[0]//2, window.size[1]//2 - window.size[1]//4
+			# FontText.render(window, FontText.font_title, (x + 4, y + 4), "Pembiasan Cahaya", True, COLORS.gray)
+			# FontText.render(window, FontText.font_title, (x, y), "Pembiasan Cahaya", True, COLORS.fg_color)
+			img = title_black
+			if night_mode.on:
+				img = title_white
+			img = pygame.transform.scale(img, [600, 400])
+			img_rect = img.get_rect(center=(x,y))
+			window.blit(img, img_rect)
 
 			# Button
-			x, y = window.size.x//2, window.size.y//4 + 100
+			x, y = window.size[0]//2, window.size[1]//3 + 100
 			for btn in range(3):
 				Button.all_buttons[btn].pos.xy = (x, y)
 				Button.all_buttons[btn].render(window.surface, mouse_pos)
-				y += 120
+				y += 100
 
-			# Reverse Button
-			x, y = window.size.x - window.size.x//8, window.size.y//3
-			btn_revers.pos.xy = (x, y)
-			btn_revers.render(window.surface, mouse_pos)
-
-			btn_bg.pos.xy = (x, y + 75)
-			btn_bg.render(window.surface, mouse_pos)
+			# Background Button
+			x, y = 100, window.size[1] - 40
+			btn_theme.pos.xy = (x, y)
+			btn_theme.render(window.surface, mouse_pos)
 
 			pygame.display.flip()
 		
@@ -268,10 +271,11 @@ class Menu:
 			pygame.display.flip()
 
 	def render_credits(self):
-		x, y = window.size.x//2, window.size.y + window.size.y//4
+		x, y = window.size[0]//2, window.size[1] + window.size[1]//4
 		font_space1 = 100
 		font_space2 = 80
 		font_space_jump_high = 650
+		# [0] = (x, y) | [1] = text | [2] = font | [3] = font space
 		credits_list = [
 			[[x, y], "GRAFIKA KOMPUTER - B", FontText.font_title, font_space1],
 			[[x, y], "Projek 1 - Pembiasan Cahaya", FontText.font_h1, font_space2],
@@ -297,7 +301,6 @@ class Menu:
 
 		while self.credits:
 			events = pygame.event.get()
-			mouse_pos = pygame.mouse.get_pos()
 
 			for event in events:
 				if event.type == pygame.QUIT:
@@ -323,11 +326,11 @@ class Menu:
 			window.update()
 
 			# Roket Congrats
-			x, y = 100, window.size.y//2 + 50
+			x, y = 50, window.size[1]//2 + 50
 			direction = [random.randint(0, 50) / 10 - 2.5, random.randint(0, 50) / 10 - 4]
 			partikel.add_particle(xy=[x, y], rad=[3, 8], direct=direction)
 
-			x, y = window.size.x - 100, window.size.y//2 + 50
+			x, y = window.size[0] - 50, window.size[1]//2 + 50
 			direction = [random.randint(0, 50) / 10 - 2.5, random.randint(0, 50) / 10 - 4]
 			partikel.add_particle(xy=[x, y], rad=[3, 8], direct=direction)
 
@@ -340,7 +343,7 @@ class Menu:
 			for crd in credits_list:
 				text = crd[2].render(crd[1], True, COLORS.fg_color)
 				window.surface.blit(text, text.get_rect(center=crd[0]))
-				crd[0][0] = window.size.x//2
+				crd[0][0] = window.size[0]//2
 				crd[0][1] -= speed
 				if crd[0][1] < 0:
 					crd[0][1] = credits_list[-1][0][1] + credits_list[-1][3]
@@ -349,7 +352,7 @@ class Menu:
 
 			# Back
 			back.pos.xy = 50, 30
-			back.render(window.surface, mouse_pos)
+			back.render(window.surface, pygame.mouse.get_pos())
 
 			pygame.display.flip()
 
@@ -382,7 +385,7 @@ class Menu:
 		InputBox.update_box()
 
 		# Box info 1
-		x, y = 20, window.size.y - 20
+		x, y = 20, window.size[1] - 20
 		box_copy = pygame.transform.scale(box_info, (270, 170))
 		rect = box_copy.get_rect(bottomleft=(x,y))
 		window.blit(box_copy, rect)
@@ -402,7 +405,7 @@ class Menu:
 			fokus_box,
 		]
 
-		x, y = 220, window.size.y - 70
+		x, y = 220, window.size[1] - 70
 		color = COLORS.black
 		for t, v in zip(teks, value):
 			text = FontText.font_normal.render(t, True, color)

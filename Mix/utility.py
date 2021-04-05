@@ -14,6 +14,7 @@ class COLORS:
 	deeppink = (255,20,147)
 
 	green = (0, 255, 0)
+	green_shade = (0, 200, 0)
 	light_green = (102, 255, 102)
 	greenyellow = (173,255,47)
 	green2 = (0,170,0)
@@ -51,7 +52,6 @@ class FontText:
 class Button:
 	all_buttons = []
 	static_buttons = []
-	revers = False
 
 	def __init__(self, xy, wh, text, statik=False, font=None, shade=True):
 		self.rect = pygame.Rect((0,0), wh)
@@ -73,12 +73,8 @@ class Button:
 		self.rect.center = self.pos.xy
 		hover = COLORS.gray
 
-		if self.revers:
-			fg_color = COLORS.bg_color
-			bg_color = COLORS.fg_color
-		else:
-			fg_color = COLORS.fg_color
-			bg_color = COLORS.bg_color
+		fg_color = COLORS.bg_color
+		bg_color = COLORS.fg_color
 
 		if self.check_collisions(mouse_pos):
 			pygame.draw.rect(surface, hover, self.rect, 0, 5)
@@ -95,7 +91,6 @@ class Button:
 				FontText.render(surface, self.font, self.pos.xy, self.text, True, hover)
 			pos = (self.pos.x - 2, self.pos.y - 2)
 			FontText.render(surface, self.font, pos, self.text, True, fg_color)
-
 
 	def check_collisions(self, mouse_pos):
 		if self.rect.collidepoint(mouse_pos):
@@ -164,7 +159,7 @@ class CvCoor:
 
 	@classmethod
 	def update(cls, size):
-		cls.size = (int(size[0]), int(size[1]))
+		cls.size = size
 
 # Mencari Gradien/Slope
 def gradien(xy1, xy2):
@@ -251,3 +246,39 @@ class InputBox:
 	@classmethod
 	def clear_all(cls):
 		cls.all_input_box.clear()
+
+class Tema:
+	background = [None]
+	character = []
+	curr_bg = None
+	curr_chr = None
+	theme_list = [[0, 0]]
+	theme_index = 0
+
+	@classmethod
+	def add_bg(cls, path):
+		img = pygame.image.load(path)
+		cls.background.append(img)
+
+	@classmethod
+	def add_chr(cls, path):
+		img = pygame.image.load(path)
+		cls.character.append(img)
+
+	@classmethod
+	def set_default(cls):
+		cls.curr_chr = cls.character[0]
+
+	@classmethod
+	def set_theme(cls, theme):
+		cls.theme_list.append(theme)
+
+	@classmethod
+	def change_theme(cls):
+		cls.theme_index += 1
+		if cls.theme_index > len(cls.theme_list)-1:
+			cls.theme_index = 0
+		theme = cls.theme_list[cls.theme_index]
+		cls.curr_bg = cls.background[theme[0]]
+		cls.curr_chr = cls.character[theme[1]]
+

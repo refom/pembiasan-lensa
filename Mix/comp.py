@@ -17,20 +17,20 @@ class Kartesius:
 
 		x, y = CvCoor.x(cls.fokus), CvCoor.y(cls.pos.y)
 		DDA((x, y), (x, y - 10), surface, color) # F
-		FontText.render(surface, FontText.font_22, (x, y - 25), "F", True, color)
+		FontText.render(surface, FontText.font_22, (x, y - 25), "f", True, color)
 
 		x = CvCoor.x(cls.fokus * 2)
 		DDA((x, y), (x, y - 10), surface, color) # 2F
-		FontText.render(surface, FontText.font_22, (x, y - 25), "2F", True, color)
+		FontText.render(surface, FontText.font_22, (x, y - 25), "r", True, color)
 
 		if menu.cembung:
 			x = CvCoor.x(cls.fokus * -1)
 			DDA((x, y), (x, y - 10), surface, color) # F Mirror
-			FontText.render(surface, FontText.font_22, (x, y - 25), "F", True, color)
+			FontText.render(surface, FontText.font_22, (x, y - 25), "f", True, color)
 
 			x = CvCoor.x(cls.fokus * 2 * -1)
 			DDA((x, y), (x, y - 10), surface, color) # 2F Mirror
-			FontText.render(surface, FontText.font_22, (x, y - 25), "2F", True, color)
+			FontText.render(surface, FontText.font_22, (x, y - 25), "r", True, color)
 
 	@classmethod
 	def handle_movement(cls, key_pressed, mouse_pressed, mouse_pos):
@@ -273,25 +273,3 @@ class Bayangan:
 		else:
 			cls.mirror_y = True
 
-	@classmethod
-	def draw_cekung(cls, SCREEN, fg_color):
-		# Kordinat Kartesius
-		kt_x, kt_y = CvCoor.xy(Kartesius.x, Kartesius.y)
-
-		# Kordinat Fokus
-		fokus = CvCoor.x(Kartesius.fokus)
-
-		# Kordinat Bayangan
-		x, y = CvCoor.xy(cls.jarak, cls.tinggi * -1)
-		# Gambar Bayangan
-		pygame.draw.line(SCREEN, fg_color, (x, kt_y), (x, y))
-		# warna
-		color_awal = RED
-		color_pantul = DEEPPINK
-
-		# Sinar B ke garis kartesius
-		pygame.draw.line(SCREEN, color_pantul, (kt_x, y), (x, y))
-
-		# Sinar B ke fokus
-		x_b2, y_b2 = CvCoor.xy(Benda.jarak, Benda.tinggi)
-		pygame.draw.line(SCREEN, color_awal, (kt_x, y), (x_b2, y_b2))

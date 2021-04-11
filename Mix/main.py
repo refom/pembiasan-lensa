@@ -1,4 +1,4 @@
-import pygame, time, os, random
+import pygame, os, random
 
 from pygame.math import Vector2
 from utility import COLORS, FontText, Button, CvCoor, InputBox, Tema
@@ -51,17 +51,12 @@ def main():
 
 	# Tema 1
 	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "desert.png"))
-	Tema.add_chr(os.path.join(os.getcwd(), "data", "img", "cactus.png"))
-	Tema.set_theme([1, 1])
+	Tema.set_theme([1, 0])
 
 	# Tema 2
 	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "planet.jpeg"))
 	Tema.add_chr(os.path.join(os.getcwd(), "data", "img", "rocket.png"))
-	Tema.set_theme([2, 2])
-
-	# Tema 3
-	Tema.add_bg(os.path.join(os.getcwd(), "data", "img", "night_moon.jpeg"))
-	Tema.set_theme([3, 2])
+	Tema.set_theme([2, 1])
 
 	# Font
 	FontText.title = os.path.join(os.getcwd(), "data", "font", "title.otf")
@@ -92,7 +87,7 @@ def main():
 			window.set_caption("Pembiasan Cahaya")
 			menu.render_menu()
 		elif menu.cembung:
-			window.set_caption("Cermin Cembung")
+			window.set_caption("Lensa Cembung")
 			menu.render_cembung()
 		elif menu.cekung:
 			window.set_caption("Cermin Cekung")
@@ -151,8 +146,8 @@ class Menu:
 		btn_cekung = Button((0,0), wh, "Cermin Cekung")
 		btn_credits = Button((0,0), wh, "Credits")
 
-		title_white = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_white.png"))
-		title_black = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_black.png"))
+		# title_white = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_white.png"))
+		# title_black = pygame.image.load(os.path.join(os.getcwd(), "data", "img", "title_black.png"))
 
 		btn_theme = Button((0,0), (150, 50), "Change Theme", font=FontText.font_semi_normal, shade=False)
 
@@ -187,14 +182,14 @@ class Menu:
 
 			# Judul
 			x, y = window.size[0]//2, window.size[1]//2 - window.size[1]//4
-			# FontText.render(window, FontText.font_title, (x + 4, y + 4), "Pembiasan Cahaya", True, COLORS.gray)
-			# FontText.render(window, FontText.font_title, (x, y), "Pembiasan Cahaya", True, COLORS.fg_color)
-			img = title_black
-			if night_mode.on:
-				img = title_white
-			img = pygame.transform.scale(img, [600, 400])
-			img_rect = img.get_rect(center=(x,y))
-			window.blit(img, img_rect)
+			FontText.render(window, FontText.font_title, (x + 4, y + 4), "Pembiasan Cahaya", True, COLORS.gray)
+			FontText.render(window, FontText.font_title, (x, y), "Pembiasan Cahaya", True, COLORS.fg_color)
+			# img = title_black
+			# if night_mode.on:
+			# 	img = title_white
+			# img = pygame.transform.scale(img, [600, 400])
+			# img_rect = img.get_rect(center=(x,y))
+			# window.blit(img, img_rect)
 
 			# Button
 			x, y = window.size[0]//2, window.size[1]//3 + 100
@@ -325,7 +320,7 @@ class Menu:
 
 			window.update()
 
-			# Roket Congrats
+			# Firework Congrats
 			x, y = 50, window.size[1]//2 + 50
 			direction = [random.randint(0, 50) / 10 - 2.5, random.randint(0, 50) / 10 - 4]
 			partikel.add_particle(xy=[x, y], rad=[3, 8], direct=direction)
